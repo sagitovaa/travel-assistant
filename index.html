@@ -1,0 +1,1382 @@
+<title>Тревел-ассистент</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  --bg:#F4F7FA; --surface:#FFFFFF; --surface-2:#EBF0F5; --surface-3:#DEE6ED;
+  --border:#D7E0E8; --border-strong:#C2CEDA;
+  --text:#152029; --text-muted:#5A6B78; --text-faint:#8B99A5;
+  --accent:#1F5E6B; --accent-strong:#123B44; --accent-soft:#E2EEEF; --accent-contrast:#FFFFFF;
+  --gold:#AD7F26; --gold-soft:#F6EDDA; --gold-strong:#8A6519;
+  --success:#2E7D52; --success-soft:#E3F2E9;
+  --warning:#B87A16; --warning-soft:#FBF0D9;
+  --danger:#BD4438; --danger-soft:#FBE8E5;
+  --shadow:0 1px 2px rgba(21,32,41,.06), 0 8px 24px rgba(21,32,41,.07);
+  --radius-s:8px; --radius-m:12px; --radius-l:20px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0F1620; --surface:#161F2A; --surface-2:#1D2733; --surface-3:#26313D;
+    --border:#2B3947; --border-strong:#3A4A59;
+    --text:#E9F0F4; --text-muted:#9FB1BF; --text-faint:#6F8090;
+    --accent:#63B4C2; --accent-strong:#8FD0DB; --accent-soft:rgba(99,180,194,.14); --accent-contrast:#0B2226;
+    --gold:#E0B056; --gold-soft:rgba(224,176,86,.14); --gold-strong:#F0C878;
+    --success:#5FBE8C; --success-soft:rgba(95,190,140,.14);
+    --warning:#E0AA4E; --warning-soft:rgba(224,170,78,.14);
+    --danger:#E38176; --danger-soft:rgba(227,129,118,.14);
+    --shadow:0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.35);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0F1620; --surface:#161F2A; --surface-2:#1D2733; --surface-3:#26313D;
+  --border:#2B3947; --border-strong:#3A4A59;
+  --text:#E9F0F4; --text-muted:#9FB1BF; --text-faint:#6F8090;
+  --accent:#63B4C2; --accent-strong:#8FD0DB; --accent-soft:rgba(99,180,194,.14); --accent-contrast:#0B2226;
+  --gold:#E0B056; --gold-soft:rgba(224,176,86,.14); --gold-strong:#F0C878;
+  --success:#5FBE8C; --success-soft:rgba(95,190,140,.14);
+  --warning:#E0AA4E; --warning-soft:rgba(224,170,78,.14);
+  --danger:#E38176; --danger-soft:rgba(227,129,118,.14);
+  --shadow:0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box;}
+body{background:var(--bg); color:var(--text); font-family:'IBM Plex Sans',system-ui,sans-serif; padding-inline:16px; padding-block:0;}
+h1,h2,h3{font-family:'Manrope',system-ui,sans-serif; text-wrap:balance; margin:0;}
+.mono{font-family:'IBM Plex Mono',ui-monospace,monospace; font-variant-numeric:tabular-nums;}
+button{font-family:inherit;}
+#app{max-width:880px; margin:0 auto; padding-bottom:56px;}
+
+/* ---- Topbar ---- */
+.topbar{position:sticky; top:env(safe-area-inset-top,0px); z-index:30; background:var(--bg); padding-top:14px; padding-bottom:10px; margin-bottom:6px;}
+.topbar-row{display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;}
+.brand{display:flex; align-items:center; gap:10px;}
+.brand-mark{width:34px; height:34px; border-radius:9px; background:linear-gradient(155deg,var(--accent),var(--accent-strong)); display:flex; align-items:center; justify-content:center; color:var(--accent-contrast); font-family:'Manrope'; font-weight:800; font-size:.95rem; flex:none;}
+.brand-text h1{font-size:1.05rem; font-weight:700; letter-spacing:-0.01em;}
+.brand-text p{margin:0; font-size:.72rem; color:var(--text-faint);}
+.topbar-actions{display:flex; gap:8px; align-items:center;}
+.icon-btn{width:34px; height:34px; border-radius:9px; border:1px solid var(--border); background:var(--surface); color:var(--text-muted); display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:.95rem;}
+.icon-btn:hover{border-color:var(--border-strong); color:var(--text);}
+.icon-btn:focus-visible, .btn:focus-visible, .role-tab:focus-visible, .option-card:focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
+
+.role-tabs{display:flex; gap:6px; overflow-x:auto; padding-bottom:2px; margin-top:12px; scrollbar-width:none;}
+.role-tabs::-webkit-scrollbar{display:none;}
+.role-tab{position:relative; flex:none; padding:8px 14px; border-radius:999px; border:1px solid var(--border); background:var(--surface); color:var(--text-muted); font-size:.82rem; font-weight:600; cursor:pointer; white-space:nowrap;}
+.role-tab.active{background:var(--accent); border-color:var(--accent); color:var(--accent-contrast);}
+.role-tab .dot{position:absolute; top:-3px; right:-3px; width:9px; height:9px; border-radius:50%; background:var(--gold); border:2px solid var(--bg);}
+
+.status-row{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:14px; flex-wrap:wrap;}
+.status-badge{display:inline-flex; align-items:center; gap:7px; padding:6px 12px; border-radius:999px; font-size:.78rem; font-weight:600; background:var(--accent-soft); color:var(--accent-strong);}
+:root[data-theme="dark"] .status-badge, :root:not([data-theme="light"]) .status-badge{color:var(--accent-strong);}
+.status-badge.warn{background:var(--warning-soft); color:var(--warning);}
+.status-badge.danger{background:var(--danger-soft); color:var(--danger);}
+.status-badge.success{background:var(--success-soft); color:var(--success);}
+.status-badge .dot2{width:7px; height:7px; border-radius:50%; background:currentColor;}
+.final-card-btn{font-size:.78rem; font-weight:600; padding:7px 12px; border-radius:999px; border:1px solid var(--border); background:var(--surface); color:var(--text); cursor:pointer;}
+.final-card-btn:hover{border-color:var(--border-strong);}
+
+.stepper{display:flex; gap:4px; margin-top:12px; overflow-x:auto; padding-bottom:4px; scrollbar-width:none;}
+.stepper::-webkit-scrollbar{display:none;}
+.step{flex:1 0 auto; min-width:76px; text-align:center;}
+.step-bar{height:4px; border-radius:3px; background:var(--surface-3);}
+.step.done .step-bar{background:var(--success);}
+.step.current .step-bar{background:var(--accent);}
+.step.warn .step-bar{background:var(--warning);}
+.step.danger .step-bar{background:var(--danger);}
+.step-label{font-size:.62rem; color:var(--text-faint); margin-top:5px; font-weight:600; text-transform:uppercase; letter-spacing:.03em;}
+.step.current .step-label{color:var(--accent);}
+
+/* ---- Banners ---- */
+.banner{border-radius:var(--radius-m); padding:14px 16px; margin-top:14px; border:1px solid transparent; display:flex; flex-direction:column; gap:8px;}
+.banner-warn{background:var(--warning-soft); border-color:color-mix(in srgb, var(--warning) 30%, transparent); color:var(--warning);}
+.banner-danger{background:var(--danger-soft); border-color:color-mix(in srgb, var(--danger) 30%, transparent); color:var(--danger);}
+.banner-success{background:var(--success-soft); border-color:color-mix(in srgb, var(--success) 30%, transparent); color:var(--success);}
+.banner-info{background:var(--accent-soft); border-color:color-mix(in srgb, var(--accent) 30%, transparent); color:var(--accent-strong);}
+.banner h3{font-size:.92rem; color:inherit;}
+.banner p, .banner li{color:var(--text); font-size:.85rem; line-height:1.5;}
+.banner ul{margin:0; padding-left:18px;}
+.copy-box{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-s); padding:10px 12px; font-size:.8rem; color:var(--text-muted); white-space:pre-wrap; line-height:1.5; max-height:220px; overflow:auto;}
+
+/* ---- Cards / layout ---- */
+.card{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-l); padding:20px; margin-top:16px; box-shadow:var(--shadow);}
+.card-head{display:flex; align-items:baseline; justify-content:space-between; gap:10px; margin-bottom:14px; flex-wrap:wrap;}
+.card-head h2{font-size:1rem; font-weight:700;}
+.card-sub{font-size:.78rem; color:var(--text-faint); margin-top:2px;}
+.eyebrow{font-size:.68rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--text-faint); margin-bottom:10px;}
+.section-gap{margin-top:22px; padding-top:18px; border-top:1px solid var(--border);}
+
+.grid-2{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+.grid-3{display:grid; grid-template-columns:repeat(3,1fr); gap:12px;}
+@media (max-width:640px){.grid-2,.grid-3{grid-template-columns:1fr;}}
+
+.field{display:flex; flex-direction:column; gap:6px; margin-bottom:14px;}
+.field-label{font-size:.76rem; font-weight:600; color:var(--text-muted);}
+.field-label .req{color:var(--danger); margin-left:2px;}
+.field-hint{font-size:.7rem; color:var(--text-faint);}
+.input, .textarea, .select{width:100%; padding:9px 11px; border-radius:var(--radius-s); border:1px solid var(--border); background:var(--surface); color:var(--text); font-size:.86rem; font-family:inherit;}
+.input:focus, .textarea:focus, .select:focus{outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft);}
+.textarea{resize:vertical; min-height:72px; line-height:1.5;}
+.field.invalid .input, .field.invalid .textarea, .field.invalid .select{border-color:var(--danger); background:var(--danger-soft);}
+.checkbox-row{display:flex; align-items:center; gap:8px; font-size:.84rem; color:var(--text); margin-bottom:14px;}
+.checkbox-row input{width:16px; height:16px; accent-color:var(--accent);}
+
+.yesno-group{display:flex; gap:8px;}
+.yesno-btn{flex:1; padding:9px; border-radius:var(--radius-s); border:1px solid var(--border); background:var(--surface); color:var(--text-muted); font-size:.82rem; font-weight:600; cursor:pointer;}
+.yesno-btn.active{background:var(--accent); border-color:var(--accent); color:var(--accent-contrast);}
+
+.readonly-grid{display:grid; grid-template-columns:1fr 1fr; gap:12px 20px;}
+@media (max-width:560px){.readonly-grid{grid-template-columns:1fr;}}
+.ro-item dt{font-size:.7rem; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:var(--text-faint); margin-bottom:3px;}
+.ro-item dd{margin:0; font-size:.88rem; color:var(--text); line-height:1.45;}
+
+/* ---- Buttons ---- */
+.btn{display:inline-flex; align-items:center; justify-content:center; gap:7px; padding:10px 16px; border-radius:999px; border:1px solid transparent; font-size:.84rem; font-weight:700; cursor:pointer; transition:filter .12s;}
+.btn:disabled{opacity:.45; cursor:not-allowed;}
+.btn-primary{background:var(--accent); color:var(--accent-contrast);}
+.btn-primary:not(:disabled):hover{filter:brightness(1.08);}
+.btn-gold{background:var(--gold); color:#241902;}
+:root[data-theme="dark"] .btn-gold, :root:not([data-theme="light"]) .btn-gold{color:#241902;}
+.btn-gold:not(:disabled):hover{filter:brightness(1.08);}
+.btn-secondary{background:var(--surface); border-color:var(--border-strong); color:var(--text);}
+.btn-secondary:not(:disabled):hover{border-color:var(--accent); color:var(--accent);}
+.btn-ghost{background:transparent; border-color:transparent; color:var(--text-muted); padding:9px 12px;}
+.btn-ghost:hover{color:var(--text); background:var(--surface-2);}
+.btn-danger{background:var(--danger); color:#fff;}
+.btn-danger:not(:disabled):hover{filter:brightness(1.08);}
+.btn-sm{padding:7px 12px; font-size:.76rem;}
+.btn-row{display:flex; gap:10px; flex-wrap:wrap; margin-top:16px;}
+.demo-row{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px;}
+
+/* ---- Option cards ---- */
+.option-list{display:flex; flex-direction:column; gap:10px;}
+.option-card{position:relative; border:1px solid var(--border); border-radius:var(--radius-m); padding:14px 44px 14px 14px; background:var(--surface-2); cursor:default;}
+.option-card.selectable{cursor:pointer;}
+.option-card.selectable:hover{border-color:var(--accent);}
+.option-card.selected{border-color:var(--accent); background:var(--accent-soft); box-shadow:0 0 0 1px var(--accent);}
+.option-top{display:flex; justify-content:space-between; align-items:baseline; gap:10px; margin-bottom:8px; flex-wrap:wrap;}
+.option-title{font-weight:700; font-size:.9rem;}
+.option-price{font-family:'IBM Plex Mono'; font-weight:600; font-size:.94rem; color:var(--accent-strong);}
+:root[data-theme="dark"] .option-price, :root:not([data-theme="light"]) .option-price{color:var(--accent-strong);}
+.option-meta{display:flex; flex-wrap:wrap; gap:6px 14px; font-size:.78rem; color:var(--text-muted);}
+.option-remove{position:absolute; top:10px; right:10px; width:26px; height:26px; border-radius:50%; border:1px solid var(--border); background:var(--surface); color:var(--text-faint); cursor:pointer; font-size:.8rem; line-height:1;}
+.option-remove:hover{color:var(--danger); border-color:var(--danger);}
+.select-pill{position:absolute; top:10px; right:10px; font-size:.68rem; font-weight:700; padding:3px 9px; border-radius:999px; background:var(--accent); color:var(--accent-contrast);}
+.check-circle{position:absolute; top:12px; right:12px; width:20px; height:20px; border-radius:50%; border:2px solid var(--border-strong); background:var(--surface);}
+.option-card.selected .check-circle{background:var(--accent); border-color:var(--accent);}
+.option-card.selected .check-circle::after{content:'✓'; color:var(--accent-contrast); font-size:.7rem; display:flex; align-items:center; justify-content:center; height:100%;}
+
+/* ---- Costs ---- */
+.cost-summary{display:flex; flex-direction:column; gap:8px; background:var(--surface-2); border-radius:var(--radius-m); padding:14px 16px; margin-top:16px;}
+.cost-row{display:flex; justify-content:space-between; font-size:.85rem; color:var(--text-muted);}
+.cost-row.total{font-size:1rem; font-weight:700; color:var(--text); border-top:1px solid var(--border); padding-top:8px; margin-top:2px;}
+.cost-row .val{font-family:'IBM Plex Mono'; font-variant-numeric:tabular-nums;}
+
+/* ---- History table ---- */
+.hist-table{width:100%; border-collapse:collapse; font-size:.82rem;}
+.hist-table th{text-align:left; font-size:.68rem; text-transform:uppercase; letter-spacing:.04em; color:var(--text-faint); font-weight:700; padding:6px 10px; border-bottom:1px solid var(--border);}
+.hist-table td{padding:9px 10px; border-bottom:1px solid var(--border); vertical-align:top; color:var(--text);}
+.hist-wrap{overflow-x:auto;}
+.hist-decision{font-weight:700; white-space:nowrap;}
+.hist-decision.ok{color:var(--success);}
+.hist-decision.back{color:var(--warning);}
+.hist-decision.no{color:var(--danger);}
+.hist-decision.note{color:var(--text-muted);}
+.hist-time{white-space:nowrap; color:var(--text-faint); font-family:'IBM Plex Mono'; font-size:.76rem;}
+
+/* ---- Pills ---- */
+.pill{display:inline-flex; align-items:center; gap:5px; padding:4px 10px; border-radius:999px; font-size:.72rem; font-weight:700;}
+.pill-ok{background:var(--success-soft); color:var(--success);}
+.pill-bad{background:var(--danger-soft); color:var(--danger);}
+
+/* ---- Modal ---- */
+.modal-overlay{position:fixed; inset:0; background:rgba(10,15,20,.55); z-index:100; display:flex; align-items:flex-end; justify-content:center; padding:0;}
+@media (min-width:640px){.modal-overlay{align-items:center; padding:24px;}}
+.modal{background:var(--surface); width:100%; max-width:640px; max-height:92vh; overflow-y:auto; border-radius:20px 20px 0 0; padding:22px; box-shadow:var(--shadow);}
+@media (min-width:640px){.modal{border-radius:var(--radius-l);}}
+.modal-head{display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; gap:10px;}
+.modal-close{width:32px; height:32px; border-radius:50%; border:1px solid var(--border); background:var(--surface); color:var(--text-muted); cursor:pointer; flex:none;}
+
+/* ---- misc ---- */
+.empty-note{font-size:.85rem; color:var(--text-faint); padding:12px 0;}
+.footnote{margin-top:28px; padding-top:16px; border-top:1px solid var(--border); font-size:.72rem; color:var(--text-faint); line-height:1.6;}
+.toast{position:fixed; left:50%; bottom:24px; transform:translateX(-50%); background:var(--text); color:var(--bg); padding:9px 16px; border-radius:999px; font-size:.8rem; font-weight:600; z-index:200; opacity:0; pointer-events:none; transition:opacity .18s;}
+.toast.show{opacity:1;}
+.divider-text{display:flex; align-items:center; gap:10px; margin:18px 0; color:var(--text-faint); font-size:.72rem; font-weight:700; text-transform:uppercase; letter-spacing:.04em;}
+.divider-text::before,.divider-text::after{content:''; flex:1; height:1px; background:var(--border);}
+@media (prefers-reduced-motion:reduce){*{transition:none!important; animation:none!important;}}
+</style>
+
+<div id="app"></div>
+<div id="toast" class="toast"></div>
+
+<script>
+(function(){
+"use strict";
+
+/* ======================= DATA / CONSTANTS ======================= */
+var ROLE_LABELS = {employee:'Сотрудник', travel_manager:'Тревел-менеджер', economist:'Экономист', accountant:'Бухгалтер', manager:'Согласующий руководитель'};
+var ROLE_ORDER = ['employee','travel_manager','economist','accountant','manager'];
+
+var STATUS_LABELS = {
+  DRAFT:'Черновик',
+  NEEDS_PURPOSE_CLARIFICATION:'Требуется уточнение цели',
+  NEEDS_DATA_CLARIFICATION:'Требуется уточнение данных',
+  OPTIONS_SOURCING:'Подбор вариантов',
+  AWAITING_EMPLOYEE_CHOICE:'Ожидает выбора сотрудника',
+  ECONOMIST_REVIEW:'На согласовании у экономиста',
+  ACCOUNTANT_REVIEW:'На согласовании у бухгалтера',
+  MANAGER_REVIEW:'На согласовании у руководителя',
+  RETURNED:'Возвращено на доработку',
+  REJECTED:'Отклонено',
+  READY:'Полностью согласовано · Готово к бронированию'
+};
+
+var STAGE_TO_STATUS = {ECONOMIST:'ECONOMIST_REVIEW', ACCOUNTANT:'ACCOUNTANT_REVIEW', MANAGER:'MANAGER_REVIEW'};
+var STAGE_LABEL = {ECONOMIST:'Экономист', ACCOUNTANT:'Бухгалтер', MANAGER:'Согласующий руководитель'};
+var ROLE_TO_STAGE = {economist:'ECONOMIST', accountant:'ACCOUNTANT', manager:'MANAGER'};
+
+var STEPS = [
+  {key:'FORM', label:'Заполнение'},
+  {key:'OPTIONS', label:'Подбор вариантов'},
+  {key:'CHOICE', label:'Выбор сотрудника'},
+  {key:'ECON', label:'Экономист'},
+  {key:'ACC', label:'Бухгалтер'},
+  {key:'MGR', label:'Руководитель'},
+  {key:'DONE', label:'Готово'}
+];
+
+var REQUIRED_FIELDS = [
+  ['purpose','Цель поездки'],
+  ['organization','Организация или мероприятие'],
+  ['justification','Обоснование необходимости поездки'],
+  ['expectedResult','Ожидаемый результат командировки'],
+  ['fullName','ФИО'],
+  ['position','Должность'],
+  ['department','Подразделение'],
+  ['cityFrom','Город отправления'],
+  ['cityTo','Город назначения'],
+  ['departureDateTime','Дата и время выезда'],
+  ['returnDateTime','Дата и время возвращения'],
+  ['flightDepartureTime','Желаемое время вылета'],
+  ['flightReturnTime','Желаемое время возвращения'],
+  ['transfersAllowed','Допустимость пересадок (да/нет)'],
+  ['baggageNeeded','Необходимость багажа (да/нет)'],
+  ['serviceClass','Класс обслуживания'],
+  ['hotelCheckIn','Дата заселения в гостиницу'],
+  ['hotelCheckOut','Дата выселения из гостиницы'],
+  ['maxPricePerNight','Максимальная стоимость за ночь'],
+  ['hotelCategory','Категория гостиницы'],
+  ['breakfastNeeded','Необходимость завтрака (да/нет)']
+];
+
+var VAGUE_PHRASES = ['по рабочим вопросам','командировка','по делам','рабочая поездка','служебная необходимость','деловая поездка','по работе','общие вопросы','рабочие вопросы','прочее','иное','по необходимости','по служебной необходимости','рабочий вопрос','деловая поездка по работе'];
+
+/* ======================= STATE ======================= */
+function defaultForm(){
+  return {
+    purpose:'', organization:'', justification:'', expectedResult:'',
+    fullName:'', position:'', department:'', cityFrom:'', cityTo:'',
+    departureDateTime:'', returnDateTime:'', datesFlexible:false,
+    flightDepartureTime:'', flightReturnTime:'', transfersAllowed:'', maxTransfers:'',
+    baggageNeeded:'', preferredAirport:'', serviceClass:'', seatPreference:'',
+    hotelCheckIn:'', hotelCheckOut:'', district:'', distance:'', maxPricePerNight:'',
+    hotelCategory:'', breakfastNeeded:'', earlyCheckIn:false, lateCheckOut:false, additionalWishes:''
+  };
+}
+
+function defaultState(){
+  return {
+    currentRole:'employee',
+    status:'DRAFT',
+    form: defaultForm(),
+    dateErrors:[],
+    missingFields:[],
+    flightOptions:[],
+    hotelOptions:[],
+    optionSeq:0,
+    selectedFlightId:null,
+    selectedHotelId:null,
+    history:[],
+    returnedStage:null,
+    commentDraft:{economist:'', accountant:'', manager:''},
+    commentError:{economist:'', accountant:'', manager:''},
+    accountant:{paymentMethod:'corporate_card', costCenter:'ЦЗ-1042', budgetRemaining:900000},
+    showFinalCard:false
+  };
+}
+
+var state = defaultState();
+
+/* ======================= HELPERS ======================= */
+function esc(s){
+  return String(s==null?'':s).replace(/[&<>"']/g, function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+  });
+}
+function nl2br(s){ return esc(s).replace(/\n/g,'<br>'); }
+
+function fmtMoney(n){
+  if(n===null||n===undefined||n==='' || isNaN(n)) return '—';
+  return Math.round(n).toLocaleString('ru-RU') + ' ₸';
+}
+function fmtDateTime(s){
+  if(!s) return '—';
+  var d = new Date(s);
+  if(isNaN(d.getTime())) return s;
+  return d.toLocaleString('ru-RU',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+}
+function fmtDate(s){
+  if(!s) return '—';
+  var d = new Date(s+'T00:00:00');
+  if(isNaN(d.getTime())) return s;
+  return d.toLocaleDateString('ru-RU',{day:'2-digit',month:'2-digit',year:'numeric'});
+}
+function fmtNow(){
+  return new Date().toLocaleString('ru-RU',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+}
+function nightsBetween(inS,outS){
+  if(!inS||!outS) return 1;
+  var a=new Date(inS+'T00:00:00'), b=new Date(outS+'T00:00:00');
+  var diff=Math.round((b-a)/86400000);
+  return diff>0?diff:1;
+}
+function yesNoLabel(v){ return v==='yes'?'Да':(v==='no'?'Нет':'—'); }
+function serviceClassLabel(v){ return {economy:'Эконом',comfort:'Комфорт',business:'Бизнес'}[v] || '—'; }
+function hotelCategoryLabel(v){ return v ? (v+' звезды') : '—'; }
+
+function findFlight(id){ return state.flightOptions.filter(function(o){return o.id===id;})[0]; }
+function findHotel(id){ return state.hotelOptions.filter(function(o){return o.id===id;})[0]; }
+function selectedFlight(){ return findFlight(state.selectedFlightId); }
+function selectedHotel(){ return findHotel(state.selectedHotelId); }
+
+function ticketCost(){ var f=selectedFlight(); return f? f.price : 0; }
+function accommodationCost(){ var h=selectedHotel(); return h? h.totalPrice : 0; }
+function totalCost(){ return ticketCost()+accommodationCost(); }
+
+/* ======================= VALIDATION ======================= */
+function isVague(purpose){
+  var p = purpose.trim().toLowerCase().replace(/[.,!?]+$/,'');
+  if(!p) return false;
+  if(p.length < 15) return true;
+  for(var i=0;i<VAGUE_PHRASES.length;i++){
+    if(p === VAGUE_PHRASES[i]) return true;
+  }
+  return false;
+}
+function getMissingFields(f){
+  var missing=[];
+  REQUIRED_FIELDS.forEach(function(pair){
+    var key=pair[0], label=pair[1];
+    var v=f[key];
+    if(v===undefined||v===null||String(v).trim()==='') missing.push(label);
+  });
+  if(f.transfersAllowed==='yes' && (!f.maxTransfers || String(f.maxTransfers).trim()==='')){
+    missing.push('Максимальное количество пересадок');
+  }
+  return missing;
+}
+function getDateErrors(f){
+  var errs=[];
+  if(f.departureDateTime && f.returnDateTime && new Date(f.returnDateTime) < new Date(f.departureDateTime)){
+    errs.push('Дата и время возвращения не могут быть раньше даты и времени выезда.');
+  }
+  if(f.hotelCheckIn && f.hotelCheckOut && new Date(f.hotelCheckOut+'T00:00:00') < new Date(f.hotelCheckIn+'T00:00:00')){
+    errs.push('Дата выселения из гостиницы не может быть раньше даты заселения.');
+  }
+  return errs;
+}
+
+/* ======================= AUTO MESSAGES ======================= */
+function clarifyPurposeMessage(){
+  var name = state.form.fullName || 'коллега';
+  return 'Здравствуйте, '+name+'!\n\nПожалуйста, уточните цель командировки — текущая формулировка слишком общая для согласования. Просим дополнить анкету:\n— конкретной задачей поездки;\n— организацией или мероприятием, которое планируется посетить;\n— обоснованием необходимости личного присутствия;\n— ожидаемым результатом командировки.\n\nПосле уточнения анкета будет передана в работу.';
+}
+function missingDataMessage(){
+  var name = state.form.fullName || 'коллега';
+  var list = state.missingFields.map(function(m){return '— '+m;}).join('\n');
+  return 'Здравствуйте, '+name+'!\n\nДля продолжения оформления командировки, пожалуйста, дозаполните анкету. Не хватает следующих сведений:\n'+list+'\n\nПосле дозаполнения анкета будет передана в работу.';
+}
+function returnMessage(stageKey, comment){
+  return 'Заявка на командировку возвращена на доработку.\n\nЭтап: '+STAGE_LABEL[stageKey]+'\nКомментарий: '+comment+'\n\nПожалуйста, внесите необходимые правки в заявку и отправьте её повторно на согласование.';
+}
+function rejectMessage(stageKey, comment){
+  return 'Заявка на командировку отклонена.\n\nЭтап: '+STAGE_LABEL[stageKey]+'\nКомментарий: '+comment;
+}
+function finalApprovalMessage(){
+  var f=state.form, fl=selectedFlight(), h=selectedHotel();
+  return 'Командировка полностью согласована и готова к бронированию.\n\nСотрудник: '+f.fullName+'\nМаршрут: '+f.cityFrom+' → '+f.cityTo+'\nДаты: '+fmtDateTime(f.departureDateTime)+' — '+fmtDateTime(f.returnDateTime)+'\nРейс: '+(fl?fl.airline+' '+fl.flightNumber:'—')+'\nГостиница: '+(h?h.name:'—')+'\nИтоговая стоимость: '+fmtMoney(totalCost());
+}
+function finalCardText(){
+  var f=state.form, fl=selectedFlight(), h=selectedHotel();
+  var lines = [
+    'ИТОГОВАЯ КАРТОЧКА КОМАНДИРОВКИ',
+    '',
+    'ФИО: '+(f.fullName||'—'),
+    'Должность: '+(f.position||'—'),
+    'Подразделение: '+(f.department||'—'),
+    '',
+    'Цель командировки: '+(f.purpose||'—'),
+    'Организация/мероприятие: '+(f.organization||'—'),
+    'Обоснование: '+(f.justification||'—'),
+    'Ожидаемый результат: '+(f.expectedResult||'—'),
+    '',
+    'Маршрут: '+(f.cityFrom||'—')+' → '+(f.cityTo||'—'),
+    'Даты поездки: '+fmtDateTime(f.departureDateTime)+' — '+fmtDateTime(f.returnDateTime),
+    '',
+    'Рейс: '+(fl ? fl.airline+' '+fl.flightNumber+', '+fmtDateTime(fl.departureDateTime)+' → '+fmtDateTime(fl.arrivalDateTime) : '— не выбран'),
+    'Гостиница: '+(h ? h.name+' ('+hotelCategoryLabel(h.category)+'), '+fmtDate(h.checkIn)+' — '+fmtDate(h.checkOut) : '— не выбрана'),
+    '',
+    'Стоимость билетов: '+fmtMoney(ticketCost()),
+    'Стоимость проживания: '+fmtMoney(accommodationCost()),
+    'Итоговая стоимость: '+fmtMoney(totalCost()),
+    '',
+    'Текущий статус: '+STATUS_LABELS[state.status],
+    '',
+    'История согласования:'
+  ];
+  if(state.history.length===0){ lines.push('— пока нет записей'); }
+  state.history.forEach(function(h2){
+    lines.push('— ['+h2.time+'] '+ROLE_LABELS[h2.role]+': '+h2.decision+(h2.comment?(' — "'+h2.comment+'"'):''));
+  });
+  return lines.join('\n');
+}
+
+/* ======================= DEMO DATA GENERATORS ======================= */
+function fillExampleForm(){
+  state.form = {
+    purpose:'Участие в переговорах с поставщиком для согласования условий контракта на 2027 год',
+    organization:'ТОО «КазТехПром», переговоры по контракту поставок',
+    justification:'Личное присутствие требуется для подписания протокола разногласий и согласования финансовых условий, которые невозможно урегулировать удалённо',
+    expectedResult:'Подписанный протокол согласования условий поставки и утверждённый график отгрузок на 2027 год',
+    fullName:'Ахметова Динара Серикқызы',
+    position:'Менеджер по продажам',
+    department:'Департамент продаж',
+    cityFrom:'Алматы',
+    cityTo:'Астана',
+    departureDateTime: nextDate(14, '09:00'),
+    returnDateTime: nextDate(16, '20:00'),
+    datesFlexible:false,
+    flightDepartureTime:'утром, до 10:00',
+    flightReturnTime:'вечером, после 18:00',
+    transfersAllowed:'no',
+    maxTransfers:'',
+    baggageNeeded:'yes',
+    preferredAirport:'Алматы (ALA)',
+    serviceClass:'comfort',
+    seatPreference:'у окна',
+    hotelCheckIn: nextDateOnly(14),
+    hotelCheckOut: nextDateOnly(16),
+    district:'Есильский район, рядом с БЦ «Байтерек»',
+    distance:'не более 2 км от места переговоров',
+    maxPricePerNight:'35000',
+    hotelCategory:'4',
+    breakfastNeeded:'yes',
+    earlyCheckIn:false,
+    lateCheckOut:true,
+    additionalWishes:'Тихий номер, желательно не на первом этаже'
+  };
+}
+function fillVagueExample(){
+  fillExampleForm();
+  state.form.purpose = 'командировка';
+}
+function nextDate(daysAhead, time){
+  var d=new Date(); d.setDate(d.getDate()+daysAhead);
+  var y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), day=String(d.getDate()).padStart(2,'0');
+  return y+'-'+m+'-'+day+'T'+time;
+}
+function nextDateOnly(daysAhead){
+  var d=new Date(); d.setDate(d.getDate()+daysAhead);
+  var y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), day=String(d.getDate()).padStart(2,'0');
+  return y+'-'+m+'-'+day;
+}
+
+var AIRLINES = [
+  {name:'Air Astana', code:'KC'},
+  {name:'SCAT', code:'DV'},
+  {name:'FlyArystan', code:'FR'},
+  {name:'Qazaq Air', code:'IQ'}
+];
+var HOTEL_NAMES = ['Rixos President Hotel','Hilton Garden Inn','Ramada by Wyndham','Rove Hotel','Radisson Blu','Ibis Style','DoubleTree by Hilton','Park Inn by Radisson'];
+
+function genId(){ state.optionSeq++; return 'opt-'+state.optionSeq; }
+
+function addFlightOptions(){
+  var f=state.form;
+  var cityFrom = f.cityFrom || 'Алматы';
+  var cityTo = f.cityTo || 'Астана';
+  var baseDate = f.departureDateTime ? f.departureDateTime.slice(0,10) : nextDateOnly(14).slice(0,10);
+  var returnDate = f.returnDateTime ? f.returnDateTime.slice(0,10) : nextDateOnly(16).slice(0,10);
+  var templates = [
+    {hh:'07:40', dur:75, transfers:0, priceMul:1.15},
+    {hh:'12:15', dur:80, transfers:0, priceMul:0.95},
+    {hh:'19:05', dur:210, transfers:1, priceMul:0.72},
+    {hh:'21:30', dur:90, transfers:0, priceMul:1.3}
+  ];
+  var n = state.flightOptions.length;
+  for(var i=0;i<3;i++){
+    var t = templates[(n+i) % templates.length];
+    var air = AIRLINES[(n+i) % AIRLINES.length];
+    var depDT = baseDate+'T'+t.hh;
+    var depDate = new Date(depDT);
+    var arrDate = new Date(depDate.getTime() + t.dur*60000);
+    var basePrice = 34000 + Math.round(Math.random()*8000);
+    var price = Math.round(basePrice * t.priceMul / 500) * 500;
+    state.flightOptions.push({
+      id: genId(),
+      airline: air.name,
+      flightNumber: air.code+' '+(700+Math.floor(Math.random()*250)),
+      airportFrom: cityFrom,
+      airportTo: cityTo,
+      departureDateTime: toLocalInput(depDate),
+      arrivalDateTime: toLocalInput(arrDate),
+      durationMin: t.dur,
+      transfers: t.transfers,
+      baggage: t.transfers===1 ? false : true,
+      price: price
+    });
+  }
+}
+function toLocalInput(d){
+  var y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), day=String(d.getDate()).padStart(2,'0');
+  var hh=String(d.getHours()).padStart(2,'0'), mi=String(d.getMinutes()).padStart(2,'0');
+  return y+'-'+m+'-'+day+'T'+hh+':'+mi;
+}
+function fmtDuration(min){
+  var h=Math.floor(min/60), m=min%60;
+  return h+' ч '+(m?m+' мин':'');
+}
+
+function addHotelOptions(){
+  var f=state.form;
+  var checkIn = f.hotelCheckIn || nextDateOnly(14);
+  var checkOut = f.hotelCheckOut || nextDateOnly(16);
+  var nights = nightsBetween(checkIn, checkOut);
+  var n = state.hotelOptions.length;
+  var templates = [
+    {price:18000, cat:'3', room:'Стандарт', dist:'1.2 км', bf:true},
+    {price:27000, cat:'4', room:'Делюкс', dist:'0.6 км', bf:true},
+    {price:42000, cat:'5', room:'Superior', dist:'2.4 км', bf:true},
+    {price:15500, cat:'3', room:'Комфорт', dist:'3.1 км', bf:false}
+  ];
+  for(var i=0;i<3;i++){
+    var t = templates[(n+i) % templates.length];
+    var name = HOTEL_NAMES[(n*3+i) % HOTEL_NAMES.length];
+    var pricePerNight = t.price + Math.round(Math.random()*2000/500)*500;
+    state.hotelOptions.push({
+      id: genId(),
+      name: name+' '+(f.cityTo||'Астана'),
+      address: (f.cityTo||'Астана')+', ул. Кабанбай батыра, '+(10+Math.floor(Math.random()*80)),
+      distance: t.dist,
+      category: t.cat,
+      roomType: t.room,
+      breakfast: t.bf,
+      checkIn: checkIn,
+      checkOut: checkOut,
+      pricePerNight: pricePerNight,
+      totalPrice: pricePerNight * nights
+    });
+  }
+}
+
+/* ======================= HISTORY ======================= */
+function addHistory(role, decision, comment){
+  state.history.push({role:role, decision:decision, comment:comment||'', time:fmtNow()});
+}
+
+/* ======================= ACTIONS ======================= */
+function handleSubmitAnketa(){
+  var f = state.form;
+  var dateErrs = getDateErrors(f);
+  state.dateErrors = dateErrs;
+  if(dateErrs.length){ render(); return; }
+
+  if(f.purpose.trim()!=='' && isVague(f.purpose)){
+    state.status = 'NEEDS_PURPOSE_CLARIFICATION';
+    state.missingFields = [];
+    render();
+    return;
+  }
+  var missing = getMissingFields(f);
+  if(missing.length){
+    state.missingFields = missing;
+    state.status = 'NEEDS_DATA_CLARIFICATION';
+    render();
+    return;
+  }
+  state.missingFields=[];
+  state.status = 'OPTIONS_SOURCING';
+  render();
+}
+
+function handleResendOptions(){
+  state.status = 'AWAITING_EMPLOYEE_CHOICE';
+  render();
+}
+
+function handleConfirmChoice(){
+  if(!state.selectedFlightId || !state.selectedHotelId) return;
+  state.status = 'ECONOMIST_REVIEW';
+  render();
+}
+
+function handleApprove(role){
+  var stage = ROLE_TO_STAGE[role];
+  var comment = (state.commentDraft[role]||'').trim();
+  addHistory(role, 'Согласовано', comment);
+  state.commentDraft[role]='';
+  if(stage==='ECONOMIST') state.status='ACCOUNTANT_REVIEW';
+  else if(stage==='ACCOUNTANT') state.status='MANAGER_REVIEW';
+  else if(stage==='MANAGER') state.status='READY';
+  render();
+}
+function handleReturn(role){
+  var comment = (state.commentDraft[role]||'').trim();
+  if(!comment){ state.commentError[role]='Комментарий обязателен для возврата на доработку.'; render(); return; }
+  var stage = ROLE_TO_STAGE[role];
+  addHistory(role, 'Возвращено на доработку', comment);
+  state.commentDraft[role]='';
+  state.commentError[role]='';
+  state.returnedStage = stage;
+  state.status = 'RETURNED';
+  render();
+}
+function handleReject(role){
+  var comment = (state.commentDraft[role]||'').trim();
+  if(!comment){ state.commentError[role]='Комментарий обязателен для отказа.'; render(); return; }
+  addHistory(role, 'Отказано', comment);
+  state.commentDraft[role]='';
+  state.commentError[role]='';
+  state.status = 'REJECTED';
+  render();
+}
+function handleComment(role){
+  var comment = (state.commentDraft[role]||'').trim();
+  if(!comment){ state.commentError[role]='Введите текст комментария.'; render(); return; }
+  addHistory(role, 'Комментарий', comment);
+  state.commentDraft[role]='';
+  state.commentError[role]='';
+  render();
+}
+function handleResubmitAfterReturn(){
+  var f = state.form;
+  var dateErrs = getDateErrors(f);
+  state.dateErrors = dateErrs;
+  if(dateErrs.length){ render(); return; }
+  if(f.purpose.trim()!=='' && isVague(f.purpose)){
+    state.status='NEEDS_PURPOSE_CLARIFICATION'; render(); return;
+  }
+  var missing = getMissingFields(f);
+  if(missing.length){ state.missingFields=missing; state.status='NEEDS_DATA_CLARIFICATION'; render(); return; }
+  var stage = state.returnedStage;
+  state.status = STAGE_TO_STATUS[stage] || 'ECONOMIST_REVIEW';
+  state.returnedStage = null;
+  render();
+}
+
+function resetDemo(){
+  state = defaultState();
+  render();
+}
+
+function copyText(text){
+  function done(){ showToast('Скопировано в буфер обмена'); }
+  try{
+    navigator.clipboard.writeText(text).then(done, function(){ fallbackCopy(text); done(); });
+  }catch(e){ fallbackCopy(text); done(); }
+}
+function fallbackCopy(text){
+  try{
+    var ta=document.createElement('textarea');
+    ta.value=text; ta.style.position='fixed'; ta.style.opacity='0';
+    document.body.appendChild(ta); ta.focus(); ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+  }catch(e){}
+}
+var toastTimer=null;
+function showToast(msg){
+  var t=document.getElementById('toast');
+  t.textContent=msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(function(){ t.classList.remove('show'); }, 1800);
+}
+
+function toggleTheme(){
+  var root=document.documentElement;
+  var cur=root.getAttribute('data-theme');
+  if(cur==='dark'){ root.setAttribute('data-theme','light'); }
+  else if(cur==='light'){ root.removeAttribute('data-theme'); }
+  else { root.setAttribute('data-theme','dark'); }
+  updateThemeIcon();
+}
+function updateThemeIcon(){
+  var btn=document.getElementById('themeToggle');
+  if(!btn) return;
+  var cur=document.documentElement.getAttribute('data-theme');
+  btn.textContent = cur==='dark' ? '☀' : (cur==='light' ? '🌓' : '☾');
+  btn.title = cur==='dark' ? 'Светлая тема' : (cur==='light' ? 'Системная тема' : 'Тёмная тема');
+}
+
+/* ======================= STEPPER LOGIC ======================= */
+function stepperState(){
+  var order=['FORM','OPTIONS','CHOICE','ECON','ACC','MGR','DONE'];
+  var idxMap={
+    DRAFT:0, NEEDS_PURPOSE_CLARIFICATION:0, NEEDS_DATA_CLARIFICATION:0,
+    OPTIONS_SOURCING:1, AWAITING_EMPLOYEE_CHOICE:2,
+    ECONOMIST_REVIEW:3, ACCOUNTANT_REVIEW:4, MANAGER_REVIEW:5, READY:6
+  };
+  var currentIdx;
+  var mode='normal';
+  if(state.status==='RETURNED'){
+    var stageIdx={ECONOMIST:3, ACCOUNTANT:4, MANAGER:5}[state.returnedStage];
+    currentIdx = stageIdx!==undefined ? stageIdx : 0;
+    mode='warn';
+  } else if(state.status==='REJECTED'){
+    var lastStage = state.history.length ? ROLE_TO_STAGE[state.history[state.history.length-1].role] : null;
+    currentIdx = lastStage ? {ECONOMIST:3,ACCOUNTANT:4,MANAGER:5}[lastStage] : 0;
+    mode='danger';
+  } else {
+    currentIdx = idxMap[state.status]!==undefined ? idxMap[state.status] : 0;
+  }
+  return order.map(function(key,i){
+    var cls='';
+    if(mode==='warn' && i===currentIdx) cls='warn';
+    else if(mode==='danger' && i===currentIdx) cls='danger';
+    else if(i<currentIdx || (state.status==='READY' && i<=6)) cls='done';
+    else if(i===currentIdx) cls='current';
+    return {key:key, cls:cls};
+  });
+}
+
+/* ======================= RENDER: HEADER ======================= */
+function statusBadgeClass(){
+  if(state.status==='REJECTED') return 'danger';
+  if(state.status==='RETURNED' || state.status==='NEEDS_PURPOSE_CLARIFICATION' || state.status==='NEEDS_DATA_CLARIFICATION') return 'warn';
+  if(state.status==='READY') return 'success';
+  return '';
+}
+function needsAttention(role){
+  switch(role){
+    case 'employee': return ['DRAFT','NEEDS_PURPOSE_CLARIFICATION','NEEDS_DATA_CLARIFICATION','AWAITING_EMPLOYEE_CHOICE','RETURNED'].indexOf(state.status)>=0;
+    case 'travel_manager': return state.status==='OPTIONS_SOURCING';
+    case 'economist': return state.status==='ECONOMIST_REVIEW';
+    case 'accountant': return state.status==='ACCOUNTANT_REVIEW';
+    case 'manager': return state.status==='MANAGER_REVIEW';
+  }
+  return false;
+}
+
+function renderHeader(){
+  var tabsHtml = ROLE_ORDER.map(function(r){
+    var active = state.currentRole===r ? ' active' : '';
+    var dot = needsAttention(r) ? '<span class="dot"></span>' : '';
+    return '<button class="role-tab'+active+'" data-action="setRole" data-role="'+r+'">'+esc(ROLE_LABELS[r])+dot+'</button>';
+  }).join('');
+
+  var steps = stepperState();
+  var stepsHtml = STEPS.map(function(s,i){
+    return '<div class="step '+steps[i].cls+'"><div class="step-bar"></div><div class="step-label">'+esc(s.label)+'</div></div>';
+  }).join('');
+
+  return ''+
+  '<div class="topbar">'+
+    '<div class="topbar-row">'+
+      '<div class="brand">'+
+        '<div class="brand-mark">TM</div>'+
+        '<div class="brand-text"><h1>Тревел-ассистент</h1><p>Оформление командировки · демо-прототип</p></div>'+
+      '</div>'+
+      '<div class="topbar-actions">'+
+        '<button class="icon-btn" id="themeToggle" data-action="toggleTheme" title="Тема">☾</button>'+
+        '<button class="icon-btn" data-action="resetDemo" title="Сбросить демо">⟲</button>'+
+      '</div>'+
+    '</div>'+
+    '<div class="role-tabs">'+tabsHtml+'</div>'+
+    '<div class="status-row">'+
+      '<span class="status-badge '+statusBadgeClass()+'"><span class="dot2"></span>'+esc(STATUS_LABELS[state.status])+'</span>'+
+      '<button class="final-card-btn" data-action="openFinalCard">Итоговая карточка</button>'+
+    '</div>'+
+    '<div class="stepper">'+stepsHtml+'</div>'+
+  '</div>';
+}
+
+/* ======================= RENDER: shared bits ======================= */
+function copyBtn(text, label){
+  return '<button class="btn btn-secondary btn-sm" data-action="copy" data-copy="'+esc(text)+'">'+(label||'Копировать')+'</button>';
+}
+function roField(label, value){
+  return '<div class="ro-item"><dt>'+esc(label)+'</dt><dd>'+esc(value)+'</dd></div>';
+}
+
+function purposeBlockRO(){
+  var f=state.form;
+  return '<div class="readonly-grid">'+
+    roField('Цель поездки', f.purpose||'—')+
+    roField('Организация / мероприятие', f.organization||'—')+
+    roField('Обоснование', f.justification||'—')+
+    roField('Ожидаемый результат', f.expectedResult||'—')+
+  '</div>';
+}
+function basicInfoRO(){
+  var f=state.form;
+  return '<div class="readonly-grid">'+
+    roField('ФИО', f.fullName||'—')+
+    roField('Должность', f.position||'—')+
+    roField('Подразделение', f.department||'—')+
+    roField('Маршрут', (f.cityFrom||'—')+' → '+(f.cityTo||'—'))+
+    roField('Выезд', fmtDateTime(f.departureDateTime))+
+    roField('Возвращение', fmtDateTime(f.returnDateTime))+
+  '</div>';
+}
+function flightReqRO(){
+  var f=state.form;
+  return '<div class="readonly-grid">'+
+    roField('Желаемое время вылета', f.flightDepartureTime||'—')+
+    roField('Желаемое время возвращения', f.flightReturnTime||'—')+
+    roField('Пересадки', yesNoLabel(f.transfersAllowed)+(f.transfersAllowed==='yes'&&f.maxTransfers?(', макс. '+f.maxTransfers):''))+
+    roField('Багаж', yesNoLabel(f.baggageNeeded))+
+    roField('Класс обслуживания', serviceClassLabel(f.serviceClass))+
+    roField('Предпочтительный аэропорт', f.preferredAirport||'—')+
+    roField('Пожелания по месту', f.seatPreference||'—')+
+  '</div>';
+}
+function hotelReqRO(){
+  var f=state.form;
+  return '<div class="readonly-grid">'+
+    roField('Даты проживания', fmtDate(f.hotelCheckIn)+' — '+fmtDate(f.hotelCheckOut))+
+    roField('Район', f.district||'—')+
+    roField('Допустимое расстояние', f.distance||'—')+
+    roField('Макс. стоимость за ночь', f.maxPricePerNight?fmtMoney(f.maxPricePerNight):'—')+
+    roField('Категория', hotelCategoryLabel(f.hotelCategory))+
+    roField('Завтрак', yesNoLabel(f.breakfastNeeded))+
+    roField('Раннее заселение', f.earlyCheckIn?'Да':'Нет')+
+    roField('Поздний выезд', f.lateCheckOut?'Да':'Нет')+
+    roField('Доп. пожелания', f.additionalWishes||'—')+
+  '</div>';
+}
+
+function historyTable(){
+  if(state.history.length===0){
+    return '<p class="empty-note">История согласования пока пуста.</p>';
+  }
+  var rows = state.history.map(function(h){
+    var cls = h.decision==='Согласовано' ? 'ok' : h.decision==='Возвращено на доработку' ? 'back' : h.decision==='Отказано' ? 'no' : 'note';
+    return '<tr><td>'+esc(ROLE_LABELS[h.role])+'</td><td class="hist-decision '+cls+'">'+esc(h.decision)+'</td><td>'+esc(h.comment||'—')+'</td><td class="hist-time">'+esc(h.time)+'</td></tr>';
+  }).join('');
+  return '<div class="hist-wrap"><table class="hist-table"><thead><tr><th>Роль</th><th>Решение</th><th>Комментарий</th><th>Время</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+}
+
+function costSummaryHtml(){
+  return '<div class="cost-summary">'+
+    '<div class="cost-row"><span>Стоимость билетов</span><span class="val">'+fmtMoney(ticketCost())+'</span></div>'+
+    '<div class="cost-row"><span>Стоимость проживания</span><span class="val">'+fmtMoney(accommodationCost())+'</span></div>'+
+    '<div class="cost-row total"><span>Итоговая стоимость</span><span class="val">'+fmtMoney(totalCost())+'</span></div>'+
+  '</div>';
+}
+
+/* ======================= RENDER: EMPLOYEE ======================= */
+function flightFieldGroupHtml(){
+  var f=state.form;
+  return ''+
+  '<div class="grid-2">'+
+    field('flightDepartureTime','text','Желаемое время вылета', f.flightDepartureTime, true, 'например, утром до 10:00')+
+    field('flightReturnTime','text','Желаемое время возвращения', f.flightReturnTime, true, 'например, вечером после 18:00')+
+  '</div>'+
+  '<div class="field"><label class="field-label">Допустимы ли пересадки?<span class="req">*</span></label>'+
+    yesNoGroup('transfersAllowed', f.transfersAllowed)+
+  '</div>'+
+  '<div class="field" id="maxTransfersWrap" '+(f.transfersAllowed==='yes'?'':'hidden')+'>'+
+    '<label class="field-label">Максимальное количество пересадок<span class="req">*</span></label>'+
+    '<input class="input" type="number" min="1" max="5" data-field="maxTransfers" value="'+esc(f.maxTransfers)+'">'+
+  '</div>'+
+  '<div class="field"><label class="field-label">Необходим ли багаж?<span class="req">*</span></label>'+
+    yesNoGroup('baggageNeeded', f.baggageNeeded)+
+  '</div>'+
+  '<div class="grid-2">'+
+    field('preferredAirport','text','Предпочтительный аэропорт', f.preferredAirport, false, 'необязательно')+
+    selectField('serviceClass','Класс обслуживания', f.serviceClass, [['economy','Эконом'],['comfort','Комфорт'],['business','Бизнес']], true)+
+  '</div>'+
+  field('seatPreference','text','Пожелания по месту в самолёте', f.seatPreference, false, 'необязательно');
+}
+function hotelFieldGroupHtml(){
+  var f=state.form;
+  return ''+
+  '<div class="grid-2">'+
+    field('hotelCheckIn','date','Дата заселения', f.hotelCheckIn, true)+
+    field('hotelCheckOut','date','Дата выселения', f.hotelCheckOut, true)+
+  '</div>'+
+  '<div class="grid-2">'+
+    field('district','text','Желаемый район', f.district, false, 'необязательно')+
+    field('distance','text','Допустимое расстояние от места мероприятия', f.distance, false, 'необязательно')+
+  '</div>'+
+  '<div class="grid-2">'+
+    field('maxPricePerNight','number','Максимальная стоимость за ночь, ₸', f.maxPricePerNight, true)+
+    selectField('hotelCategory','Категория гостиницы', f.hotelCategory, [['3','3 звезды'],['4','4 звезды'],['5','5 звёзд']], true)+
+  '</div>'+
+  '<div class="field"><label class="field-label">Нужен завтрак?<span class="req">*</span></label>'+
+    yesNoGroup('breakfastNeeded', f.breakfastNeeded)+
+  '</div>'+
+  '<div class="grid-2">'+
+    checkboxField('earlyCheckIn','Раннее заселение', f.earlyCheckIn)+
+    checkboxField('lateCheckOut','Поздний выезд', f.lateCheckOut)+
+  '</div>'+
+  field('additionalWishes','textarea','Дополнительные пожелания к гостинице', f.additionalWishes, false, 'необязательно');
+}
+
+function field(key,type,label,value,required,placeholder){
+  var invalid = required && state.status.indexOf('NEEDS_')===0 && (!value || String(value).trim()==='') ? ' invalid' : '';
+  var inputHtml;
+  if(type==='textarea'){
+    inputHtml = '<textarea class="textarea" data-field="'+key+'" placeholder="'+esc(placeholder||'')+'">'+esc(value)+'</textarea>';
+  } else {
+    inputHtml = '<input class="input" type="'+type+'" data-field="'+key+'" value="'+esc(value)+'" placeholder="'+esc(placeholder||'')+'">';
+  }
+  return '<div class="field'+invalid+'"><label class="field-label">'+esc(label)+(required?'<span class="req">*</span>':'')+'</label>'+inputHtml+'</div>';
+}
+function selectField(key,label,value,options,required){
+  var invalid = required && state.status.indexOf('NEEDS_')===0 && !value ? ' invalid' : '';
+  var opts = '<option value=""'+(!value?' selected':'')+' disabled>Выбрать…</option>' + options.map(function(o){
+    return '<option value="'+esc(o[0])+'"'+(value===o[0]?' selected':'')+'>'+esc(o[1])+'</option>';
+  }).join('');
+  return '<div class="field'+invalid+'"><label class="field-label">'+esc(label)+(required?'<span class="req">*</span>':'')+'</label><select class="select" data-field="'+key+'">'+opts+'</select></div>';
+}
+function checkboxField(key,label,checked){
+  return '<label class="checkbox-row"><input type="checkbox" data-field="'+key+'" '+(checked?'checked':'')+'> '+esc(label)+'</label>';
+}
+function yesNoGroup(key,value){
+  return '<div class="yesno-group">'+
+    '<button type="button" class="yesno-btn'+(value==='yes'?' active':'')+'" data-action="setYesNo" data-field="'+key+'" data-value="yes">Да</button>'+
+    '<button type="button" class="yesno-btn'+(value==='no'?' active':'')+'" data-action="setYesNo" data-field="'+key+'" data-value="no">Нет</button>'+
+  '</div>';
+}
+
+function renderEmployeeForm(showDemoTools, submitLabel, submitAction){
+  var f=state.form;
+  var html = '<div class="card">';
+  if(showDemoTools){
+    html += '<div class="eyebrow">Демо-инструменты</div>'+
+      '<div class="demo-row">'+
+        '<button class="btn btn-secondary btn-sm" data-action="fillExample">Заполнить пример анкеты</button>'+
+        '<button class="btn btn-secondary btn-sm" data-action="fillVague">Пример с нечёткой целью</button>'+
+        '<button class="btn btn-ghost btn-sm" data-action="clearForm">Очистить форму</button>'+
+      '</div>';
+  }
+
+  if(state.status==='NEEDS_PURPOSE_CLARIFICATION'){
+    html += '<div class="banner banner-warn"><h3>Требуется уточнение цели</h3><p>Формулировка цели слишком общая. Ниже — готовый текст уточняющего вопроса сотруднику.</p><div class="copy-box">'+nl2br(clarifyPurposeMessage())+'</div>'+copyBtn(clarifyPurposeMessage())+'</div>';
+  }
+  if(state.status==='NEEDS_DATA_CLARIFICATION'){
+    html += '<div class="banner banner-warn"><h3>Требуется уточнение данных</h3><p>Не заполнены обязательные поля:</p><ul>'+state.missingFields.map(function(m){return '<li>'+esc(m)+'</li>';}).join('')+'</ul><div class="copy-box">'+nl2br(missingDataMessage())+'</div>'+copyBtn(missingDataMessage())+'</div>';
+  }
+  if(state.dateErrors.length){
+    html += '<div class="banner banner-danger"><h3>Ошибка в датах</h3><ul>'+state.dateErrors.map(function(m){return '<li>'+esc(m)+'</li>';}).join('')+'</ul></div>';
+  }
+
+  html += '<div class="card-head"><h2>Цель командировки</h2></div>';
+  html += field('purpose','textarea','Цель поездки', f.purpose, true, 'например: переговоры с поставщиком по условиям контракта на 2027 год');
+  html += field('organization','text','Организация или мероприятие', f.organization, true);
+  html += field('justification','textarea','Обоснование необходимости поездки', f.justification, true);
+  html += field('expectedResult','textarea','Ожидаемый результат командировки', f.expectedResult, true);
+
+  html += '<div class="section-gap"><div class="card-head"><h2>Основные сведения</h2></div>'+
+    '<div class="grid-2">'+field('fullName','text','ФИО', f.fullName, true)+field('position','text','Должность', f.position, true)+'</div>'+
+    '<div class="grid-2">'+field('department','text','Подразделение', f.department, true)+'<div></div></div>'+
+    '<div class="grid-2">'+field('cityFrom','text','Город отправления', f.cityFrom, true)+field('cityTo','text','Город назначения', f.cityTo, true)+'</div>'+
+    '<div class="grid-2">'+field('departureDateTime','datetime-local','Дата и время выезда', f.departureDateTime, true)+field('returnDateTime','datetime-local','Дата и время возвращения', f.returnDateTime, true)+'</div>'+
+    checkboxField('datesFlexible','Возможно изменение дат', f.datesFlexible)+
+  '</div>';
+
+  html += '<div class="section-gap"><div class="card-head"><h2>Требования к перелёту</h2></div>'+flightFieldGroupHtml()+'</div>';
+  html += '<div class="section-gap"><div class="card-head"><h2>Требования к гостинице</h2></div>'+hotelFieldGroupHtml()+'</div>';
+
+  html += '<div class="btn-row"><button class="btn btn-primary" data-action="'+submitAction+'">'+submitLabel+'</button></div>';
+  html += '</div>';
+  return html;
+}
+
+function renderEmployee(){
+  var st = state.status;
+  if(st==='DRAFT' || st==='NEEDS_PURPOSE_CLARIFICATION' || st==='NEEDS_DATA_CLARIFICATION'){
+    return renderEmployeeForm(true, 'Отправить анкету на рассмотрение', 'submitAnketa');
+  }
+  if(st==='RETURNED'){
+    var last = state.history[state.history.length-1];
+    var html = '<div class="banner banner-warn"><h3>Заявка возвращена на доработку</h3><p>Этап: '+esc(STAGE_LABEL[state.returnedStage])+'. Комментарий: «'+esc(last?last.comment:'')+'»</p><div class="copy-box">'+nl2br(returnMessage(state.returnedStage, last?last.comment:''))+'</div>'+copyBtn(returnMessage(state.returnedStage, last?last.comment:''))+'</div>';
+    html += renderEmployeeForm(false, 'Отправить повторно на согласование', 'resubmitAfterReturn');
+    if(state.flightOptions.length>=3 && state.hotelOptions.length>=3){
+      html += renderChoiceSection(true);
+    }
+    return html;
+  }
+  if(st==='OPTIONS_SOURCING'){
+    return '<div class="card"><div class="banner banner-info" style="margin-top:0"><h3>Анкета передана тревел-менеджеру</h3><p>Ожидаем подбора вариантов перелёта и гостиницы. Ваши требования ниже — доступны только для просмотра.</p></div>'+
+      '<div class="section-gap"><div class="card-head"><h2>Цель командировки</h2></div>'+purposeBlockRO()+'</div>'+
+      '<div class="section-gap"><div class="card-head"><h2>Основные сведения</h2></div>'+basicInfoRO()+'</div>'+
+      '<div class="section-gap"><div class="card-head"><h2>Требования к перелёту</h2></div>'+flightReqRO()+'</div>'+
+      '<div class="section-gap"><div class="card-head"><h2>Требования к гостинице</h2></div>'+hotelReqRO()+'</div>'+
+    '</div>';
+  }
+  if(st==='AWAITING_EMPLOYEE_CHOICE'){
+    return renderChoiceSection(false);
+  }
+  if(['ECONOMIST_REVIEW','ACCOUNTANT_REVIEW','MANAGER_REVIEW'].indexOf(st)>=0){
+    return '<div class="card"><div class="banner banner-info" style="margin-top:0"><h3>Заявка на согласовании</h3><p>Текущий этап: '+esc(STATUS_LABELS[st])+'. Вы получите уведомление после решения.</p></div>'+
+      renderTripReadonlySummary()+
+      costSummaryHtml()+
+    '</div>';
+  }
+  if(st==='REJECTED'){
+    var lastR = state.history[state.history.length-1];
+    var stage = lastR ? ROLE_TO_STAGE[lastR.role] : 'MANAGER';
+    return '<div class="card"><div class="banner banner-danger" style="margin-top:0"><h3>Заявка отклонена</h3><div class="copy-box">'+nl2br(rejectMessage(stage, lastR?lastR.comment:''))+'</div>'+copyBtn(rejectMessage(stage, lastR?lastR.comment:''))+'</div></div>';
+  }
+  if(st==='READY'){
+    return '<div class="card"><div class="banner banner-success" style="margin-top:0"><h3>Командировка согласована!</h3><div class="copy-box">'+nl2br(finalApprovalMessage())+'</div>'+copyBtn(finalApprovalMessage())+'</div>'+
+      renderTripReadonlySummary()+ costSummaryHtml() +
+      '<div class="btn-row"><button class="btn btn-secondary" data-action="openFinalCard">Открыть итоговую карточку</button></div>'+
+    '</div>';
+  }
+  return '<div class="card"><p class="empty-note">Нет данных для отображения.</p></div>';
+}
+
+function renderTripReadonlySummary(){
+  var fl=selectedFlight(), h=selectedHotel();
+  var html = '<div class="section-gap" style="margin-top:8px; padding-top:0; border-top:none;">'+
+    '<div class="card-head"><h2>Выбранные варианты</h2></div>'+
+    '<div class="option-list">';
+  html += '<div class="option-card"><div class="option-top"><span class="option-title">'+(fl?esc(fl.airline+' '+fl.flightNumber):'Рейс не выбран')+'</span><span class="option-price">'+(fl?fmtMoney(fl.price):'—')+'</span></div>'+
+    (fl?('<div class="option-meta"><span>'+esc(fl.airportFrom)+' → '+esc(fl.airportTo)+'</span><span>'+fmtDateTime(fl.departureDateTime)+'</span><span>'+fmtDuration(fl.durationMin)+'</span><span>'+(fl.transfers?fl.transfers+' пересадка':'без пересадок')+'</span></div>'):'')+
+  '</div>';
+  html += '<div class="option-card"><div class="option-top"><span class="option-title">'+(h?esc(h.name):'Гостиница не выбрана')+'</span><span class="option-price">'+(h?fmtMoney(h.totalPrice):'—')+'</span></div>'+
+    (h?('<div class="option-meta"><span>'+esc(h.address)+'</span><span>'+hotelCategoryLabel(h.category)+'</span><span>'+fmtDate(h.checkIn)+' — '+fmtDate(h.checkOut)+'</span></div>'):'')+
+  '</div>';
+  html += '</div></div>';
+  return html;
+}
+
+function renderChoiceSection(insideReturned){
+  var f=state.form;
+  var html = insideReturned ? '<div class="card"><div class="card-head"><h2>Выбор перелёта и гостиницы</h2><span class="card-sub">Можно изменить выбор перед повторной отправкой</span></div>' :
+    '<div class="card"><div class="card-head"><h2>Сравните и выберите варианты</h2></div><p class="empty-note" style="padding-top:0;">Маршрут: '+esc(f.cityFrom)+' → '+esc(f.cityTo)+'</p>';
+
+  html += '<div class="eyebrow">Варианты перелёта</div><div class="option-list">';
+  state.flightOptions.forEach(function(o){
+    var sel = state.selectedFlightId===o.id;
+    html += '<div class="option-card selectable'+(sel?' selected':'')+'" data-action="selectFlight" data-id="'+o.id+'">'+
+      '<div class="check-circle"></div>'+
+      '<div class="option-top"><span class="option-title">'+esc(o.airline)+' · '+esc(o.flightNumber)+'</span><span class="option-price">'+fmtMoney(o.price)+'</span></div>'+
+      '<div class="option-meta"><span>'+esc(o.airportFrom)+' → '+esc(o.airportTo)+'</span><span>'+fmtDateTime(o.departureDateTime)+' → '+fmtDateTime(o.arrivalDateTime)+'</span><span>'+fmtDuration(o.durationMin)+'</span><span>'+(o.transfers?o.transfers+' пересадка':'без пересадок')+'</span><span>'+(o.baggage?'багаж включён':'без багажа')+'</span></div>'+
+    '</div>';
+  });
+  html += '</div>';
+
+  html += '<div class="eyebrow" style="margin-top:18px;">Варианты гостиницы</div><div class="option-list">';
+  state.hotelOptions.forEach(function(o){
+    var sel = state.selectedHotelId===o.id;
+    var nights = nightsBetween(o.checkIn,o.checkOut);
+    html += '<div class="option-card selectable'+(sel?' selected':'')+'" data-action="selectHotel" data-id="'+o.id+'">'+
+      '<div class="check-circle"></div>'+
+      '<div class="option-top"><span class="option-title">'+esc(o.name)+'</span><span class="option-price">'+fmtMoney(o.totalPrice)+'</span></div>'+
+      '<div class="option-meta"><span>'+esc(o.address)+'</span><span>'+hotelCategoryLabel(o.category)+'</span><span>'+esc(o.roomType)+'</span><span>'+(o.breakfast?'завтрак включён':'без завтрака')+'</span><span>'+fmtDate(o.checkIn)+' — '+fmtDate(o.checkOut)+' ('+nights+' н.)</span><span>'+fmtMoney(o.pricePerNight)+'/ночь</span></div>'+
+    '</div>';
+  });
+  html += '</div>';
+
+  html += costSummaryHtml();
+
+  var action = insideReturned ? 'resubmitAfterReturn' : 'confirmChoice';
+  var label = insideReturned ? 'Отправить повторно на согласование' : 'Подтвердить выбор и отправить на согласование';
+  var disabled = (!state.selectedFlightId || !state.selectedHotelId) ? 'disabled' : '';
+  if(!insideReturned){
+    html += '<div class="btn-row"><button class="btn btn-primary" data-action="'+action+'" '+disabled+'>'+label+'</button></div>';
+  }
+  html += '</div>';
+  return html;
+}
+
+/* ======================= RENDER: TRAVEL MANAGER ======================= */
+function renderTravelManager(){
+  var st = state.status;
+  if(['DRAFT','NEEDS_PURPOSE_CLARIFICATION','NEEDS_DATA_CLARIFICATION'].indexOf(st)>=0){
+    return '<div class="card"><p class="empty-note">Ожидание заполнения анкеты сотрудником. Как только анкета пройдёт валидацию, здесь появятся требования к перелёту и гостинице для подбора вариантов.</p></div>';
+  }
+  var readonlyOnly = ['AWAITING_EMPLOYEE_CHOICE','ECONOMIST_REVIEW','ACCOUNTANT_REVIEW','MANAGER_REVIEW','RETURNED','REJECTED','READY'].indexOf(st)>=0;
+
+  var html = '<div class="card"><div class="card-head"><h2>Требования сотрудника</h2><span class="card-sub">'+esc(state.form.fullName||'—')+' · '+esc(state.form.cityFrom)+' → '+esc(state.form.cityTo)+'</span></div>';
+  html += '<div class="eyebrow">Перелёт</div>'+flightReqRO();
+  html += '<div class="section-gap"><div class="eyebrow">Гостиница</div>'+hotelReqRO()+'</div>';
+  html += '</div>';
+
+  html += '<div class="card"><div class="card-head"><h2>Варианты перелёта</h2><span class="card-sub">'+state.flightOptions.length+' из 3+ минимум</span></div>';
+  if(!readonlyOnly){
+    html += '<div class="demo-row"><button class="btn btn-secondary btn-sm" data-action="addFlightOptions">+ Добавить 3 тестовых варианта</button></div>';
+  }
+  if(state.flightOptions.length===0){
+    html += '<p class="empty-note">Вариантов ещё нет.</p>';
+  } else {
+    html += '<div class="option-list">'+state.flightOptions.map(function(o){
+      var chosen = state.selectedFlightId===o.id;
+      return '<div class="option-card">'+
+        (readonlyOnly && chosen ? '<span class="select-pill">Выбран</span>' : (!readonlyOnly ? '<button class="option-remove" data-action="removeFlight" data-id="'+o.id+'">✕</button>' : '')) +
+        '<div class="option-top"><span class="option-title">'+esc(o.airline)+' · '+esc(o.flightNumber)+'</span><span class="option-price">'+fmtMoney(o.price)+'</span></div>'+
+        '<div class="option-meta"><span>'+esc(o.airportFrom)+' → '+esc(o.airportTo)+'</span><span>'+fmtDateTime(o.departureDateTime)+' → '+fmtDateTime(o.arrivalDateTime)+'</span><span>'+fmtDuration(o.durationMin)+'</span><span>'+(o.transfers?o.transfers+' пересадка':'без пересадок')+'</span><span>'+(o.baggage?'багаж включён':'без багажа')+'</span></div>'+
+      '</div>';
+    }).join('')+'</div>';
+  }
+  html += '</div>';
+
+  html += '<div class="card"><div class="card-head"><h2>Варианты гостиницы</h2><span class="card-sub">'+state.hotelOptions.length+' из 3+ минимум</span></div>';
+  if(!readonlyOnly){
+    html += '<div class="demo-row"><button class="btn btn-secondary btn-sm" data-action="addHotelOptions">+ Добавить 3 тестовых варианта</button></div>';
+  }
+  if(state.hotelOptions.length===0){
+    html += '<p class="empty-note">Вариантов ещё нет.</p>';
+  } else {
+    html += '<div class="option-list">'+state.hotelOptions.map(function(o){
+      var chosen = state.selectedHotelId===o.id;
+      var nights = nightsBetween(o.checkIn,o.checkOut);
+      return '<div class="option-card">'+
+        (readonlyOnly && chosen ? '<span class="select-pill">Выбрана</span>' : (!readonlyOnly ? '<button class="option-remove" data-action="removeHotel" data-id="'+o.id+'">✕</button>' : '')) +
+        '<div class="option-top"><span class="option-title">'+esc(o.name)+'</span><span class="option-price">'+fmtMoney(o.totalPrice)+'</span></div>'+
+        '<div class="option-meta"><span>'+esc(o.address)+'</span><span>'+hotelCategoryLabel(o.category)+'</span><span>'+esc(o.roomType)+'</span><span>'+(o.breakfast?'завтрак включён':'без завтрака')+'</span><span>'+fmtDate(o.checkIn)+' — '+fmtDate(o.checkOut)+' ('+nights+' н.)</span><span>'+fmtMoney(o.pricePerNight)+'/ночь</span></div>'+
+      '</div>';
+    }).join('')+'</div>';
+  }
+  if(!readonlyOnly){
+    var ready = state.flightOptions.length>=3 && state.hotelOptions.length>=3;
+    html += '<div class="btn-row"><button class="btn btn-primary" data-action="sendOptionsToEmployee" '+(ready?'':'disabled')+'>Варианты готовы — отправить сотруднику</button></div>';
+    if(!ready) html += '<p class="field-hint" style="margin-top:8px;">Нужно минимум 3 варианта перелёта и 3 варианта гостиницы.</p>';
+  }
+  html += '</div>';
+  return html;
+}
+
+/* ======================= RENDER: APPROVAL ROLES ======================= */
+function approvalActionsHtml(role){
+  var comment = state.commentDraft[role]||'';
+  var err = state.commentError[role]||'';
+  return '<div class="section-gap"><div class="eyebrow">Комментарий</div>'+
+    '<div class="field'+(err?' invalid':'')+'"><textarea class="textarea" data-field="comment" data-role="'+role+'" placeholder="Комментарий (обязателен для возврата или отказа)">'+esc(comment)+'</textarea>'+(err?'<span class="field-hint" style="color:var(--danger)">'+esc(err)+'</span>':'')+'</div>'+
+    '<div class="btn-row">'+
+      '<button class="btn btn-primary" data-action="approve" data-role="'+role+'">Согласовать</button>'+
+      '<button class="btn btn-secondary" data-action="return" data-role="'+role+'">Вернуть на доработку</button>'+
+      '<button class="btn btn-danger" data-action="reject" data-role="'+role+'">Отказать</button>'+
+      '<button class="btn btn-ghost" data-action="comment" data-role="'+role+'">Добавить комментарий</button>'+
+    '</div></div>';
+}
+
+function renderEconomist(){
+  var st=state.status;
+  if(['DRAFT','NEEDS_PURPOSE_CLARIFICATION','NEEDS_DATA_CLARIFICATION','OPTIONS_SOURCING','AWAITING_EMPLOYEE_CHOICE'].indexOf(st)>=0){
+    return '<div class="card"><p class="empty-note">Заявка ещё не дошла до этапа согласования экономистом.</p></div>';
+  }
+  var f=state.form;
+  var html = '<div class="card"><div class="card-head"><h2>Проверка бюджета</h2><span class="card-sub">'+esc(f.fullName)+'</span></div>';
+  html += '<div class="eyebrow">Цель и обоснование</div>'+purposeBlockRO();
+  html += '<div class="section-gap">'+renderTripReadonlySummary()+'</div>';
+  html += costSummaryHtml();
+  if(st==='ECONOMIST_REVIEW'){
+    html += approvalActionsHtml('economist');
+  } else {
+    html += '<div class="section-gap"><div class="eyebrow">История согласования</div>'+historyTable()+'</div>';
+  }
+  html += '</div>';
+  return html;
+}
+
+function renderAccountant(){
+  var st=state.status;
+  if(['DRAFT','NEEDS_PURPOSE_CLARIFICATION','NEEDS_DATA_CLARIFICATION','OPTIONS_SOURCING','AWAITING_EMPLOYEE_CHOICE','ECONOMIST_REVIEW'].indexOf(st)>=0){
+    return '<div class="card"><p class="empty-note">Заявка ещё не дошла до этапа проверки бухгалтером.</p></div>';
+  }
+  var econDecision = state.history.filter(function(h){return h.role==='economist';}).slice(-1)[0];
+  var html = '<div class="card"><div class="card-head"><h2>Проверка финансовых данных</h2><span class="card-sub">'+esc(state.form.fullName)+'</span></div>';
+  html += '<div class="eyebrow">Параметры поездки</div>'+basicInfoRO();
+  html += '<div class="section-gap">'+renderTripReadonlySummary()+'</div>';
+  html += costSummaryHtml();
+  html += '<div class="section-gap"><div class="eyebrow">Решение экономиста</div>'+
+    (econDecision ? '<div class="readonly-grid">'+roField('Решение', econDecision.decision)+roField('Комментарий', econDecision.comment||'—')+'</div>' : '<p class="empty-note">Нет решения.</p>')+
+  '</div>';
+
+  var isCurrent = st==='ACCOUNTANT_REVIEW';
+  var acc = state.accountant;
+  var match = totalCost() <= (Number(acc.budgetRemaining)||0);
+  html += '<div class="section-gap"><div class="eyebrow">Способ оплаты и бюджет</div>';
+  if(isCurrent){
+    html += '<div class="grid-2">'+
+      selectField('paymentMethod_acc','Способ оплаты', acc.paymentMethod, [['corporate_card','Корпоративная карта'],['bank_transfer','Безналичный перевод'],['advance','Аванс сотруднику']], false).replace('data-field="paymentMethod_acc"','data-field="paymentMethod" data-role="accountant"')+
+      field('costCenter_acc','text','Центр затрат', acc.costCenter, false).replace('data-field="costCenter_acc"','data-field="costCenter" data-role="accountant"')+
+    '</div>'+
+    field('budgetRemaining_acc','number','Остаток бюджета подразделения, ₸', acc.budgetRemaining, false).replace('data-field="budgetRemaining_acc"','data-field="budgetRemaining" data-role="accountant"');
+  } else {
+    html += '<div class="readonly-grid">'+
+      roField('Способ оплаты', {corporate_card:'Корпоративная карта',bank_transfer:'Безналичный перевод',advance:'Аванс сотруднику'}[acc.paymentMethod]||'—')+
+      roField('Центр затрат', acc.costCenter||'—')+
+      roField('Остаток бюджета подразделения', fmtMoney(acc.budgetRemaining))+
+    '</div>';
+  }
+  html += '<div style="margin-top:10px;" id="budgetPillWrap"><span class="pill '+(match?'pill-ok':'pill-bad')+'" id="budgetPill">'+(match?'В рамках бюджета':'Превышение бюджета')+'</span></div>';
+  html += '</div>';
+
+  if(isCurrent){
+    html += approvalActionsHtml('accountant');
+  } else {
+    html += '<div class="section-gap"><div class="eyebrow">История согласования</div>'+historyTable()+'</div>';
+  }
+  html += '</div>';
+  return html;
+}
+
+function renderManager(){
+  var st=state.status;
+  if(['DRAFT','NEEDS_PURPOSE_CLARIFICATION','NEEDS_DATA_CLARIFICATION','OPTIONS_SOURCING','AWAITING_EMPLOYEE_CHOICE','ECONOMIST_REVIEW','ACCOUNTANT_REVIEW'].indexOf(st)>=0 && st!=='RETURNED' && st!=='REJECTED' && st!=='READY'){
+    return '<div class="card"><p class="empty-note">Заявка ещё не дошла до этапа согласования руководителем.</p></div>';
+  }
+  var html = '<div class="card"><div class="card-head"><h2>Окончательное согласование</h2><span class="card-sub">'+esc(state.form.fullName)+'</span></div>';
+  html += '<div class="eyebrow">Цель и ожидаемый результат</div>'+purposeBlockRO();
+  html += '<div class="section-gap">'+renderTripReadonlySummary()+'</div>';
+  html += costSummaryHtml();
+  html += '<div class="section-gap"><div class="eyebrow">Полная история согласования</div>'+historyTable()+'</div>';
+  if(st==='MANAGER_REVIEW'){
+    html += approvalActionsHtml('manager');
+  }
+  html += '</div>';
+  return html;
+}
+
+/* ======================= FINAL CARD MODAL ======================= */
+function renderFinalCardModal(){
+  if(!state.showFinalCard) return '';
+  var f=state.form, fl=selectedFlight(), h=selectedHotel();
+  var text = finalCardText();
+  var html = '<div class="modal-overlay" data-action="closeFinalCardOverlay"><div class="modal" data-stop="1">'+
+    '<div class="modal-head"><h2>Итоговая карточка поездки</h2><button class="modal-close" data-action="closeFinalCard">✕</button></div>'+
+    '<div class="readonly-grid">'+
+      roField('ФИО', f.fullName||'—')+roField('Должность / подразделение', (f.position||'—')+' / '+(f.department||'—'))+
+      roField('Цель командировки', f.purpose||'—')+roField('Обоснование', f.justification||'—')+
+      roField('Ожидаемый результат', f.expectedResult||'—')+roField('Маршрут и даты', (f.cityFrom||'—')+' → '+(f.cityTo||'—')+', '+fmtDateTime(f.departureDateTime)+' — '+fmtDateTime(f.returnDateTime))+
+      roField('Рейс', fl?(fl.airline+' '+fl.flightNumber):'—')+roField('Гостиница', h?h.name:'—')+
+      roField('Стоимость билетов', fmtMoney(ticketCost()))+roField('Стоимость проживания', fmtMoney(accommodationCost()))+
+      roField('Общая стоимость', fmtMoney(totalCost()))+roField('Текущий статус', STATUS_LABELS[state.status])+
+    '</div>'+
+    '<div class="section-gap"><div class="eyebrow">История согласования</div>'+historyTable()+'</div>'+
+    '<div class="btn-row"><button class="btn btn-primary" data-action="copy" data-copy="'+esc(text)+'">Скопировать итоговую карточку</button></div>'+
+  '</div></div>';
+  return html;
+}
+
+/* ======================= MAIN RENDER ======================= */
+function renderRoleContent(){
+  switch(state.currentRole){
+    case 'employee': return renderEmployee();
+    case 'travel_manager': return renderTravelManager();
+    case 'economist': return renderEconomist();
+    case 'accountant': return renderAccountant();
+    case 'manager': return renderManager();
+  }
+  return '';
+}
+
+function render(){
+  var html = renderHeader() + renderRoleContent();
+  html += '<div class="footnote">Прототип использует только тестовые данные (тестовые ФИО, маршруты, валюта ₸). Реальные сервисы бронирования, оплаты и персональные данные не подключаются.</div>';
+  html += renderFinalCardModal();
+  document.getElementById('app').innerHTML = html;
+  updateThemeIcon();
+}
+
+/* ======================= EVENT DELEGATION ======================= */
+var app = document.getElementById('app');
+
+app.addEventListener('click', function(e){
+  var overlay = e.target.closest('[data-action="closeFinalCardOverlay"]');
+  if(overlay && e.target === overlay){ state.showFinalCard=false; render(); return; }
+
+  var t = e.target.closest('[data-action]');
+  if(!t) return;
+  var action = t.getAttribute('data-action');
+  switch(action){
+    case 'setRole': state.currentRole = t.getAttribute('data-role'); render(); break;
+    case 'toggleTheme': toggleTheme(); break;
+    case 'resetDemo': resetDemo(); break;
+    case 'openFinalCard': state.showFinalCard=true; render(); break;
+    case 'closeFinalCard': state.showFinalCard=false; render(); break;
+    case 'fillExample': fillExampleForm(); state.dateErrors=[]; render(); break;
+    case 'fillVague': fillVagueExample(); state.dateErrors=[]; render(); break;
+    case 'clearForm': state.form=defaultForm(); state.dateErrors=[]; render(); break;
+    case 'submitAnketa': handleSubmitAnketa(); break;
+    case 'resubmitAfterReturn': handleResubmitAfterReturn(); break;
+    case 'setYesNo':
+      state.form[t.getAttribute('data-field')] = t.getAttribute('data-value');
+      if(t.getAttribute('data-field')==='transfersAllowed'){
+        var wrap=document.getElementById('maxTransfersWrap');
+        if(wrap) wrap.hidden = (t.getAttribute('data-value')!=='yes');
+      }
+      render();
+      break;
+    case 'addFlightOptions': addFlightOptions(); render(); break;
+    case 'removeFlight':
+      var fid=t.getAttribute('data-id');
+      state.flightOptions = state.flightOptions.filter(function(o){return o.id!==fid;});
+      if(state.selectedFlightId===fid) state.selectedFlightId=null;
+      render();
+      break;
+    case 'addHotelOptions': addHotelOptions(); render(); break;
+    case 'removeHotel':
+      var hid=t.getAttribute('data-id');
+      state.hotelOptions = state.hotelOptions.filter(function(o){return o.id!==hid;});
+      if(state.selectedHotelId===hid) state.selectedHotelId=null;
+      render();
+      break;
+    case 'sendOptionsToEmployee': handleResendOptions(); break;
+    case 'selectFlight': state.selectedFlightId=t.getAttribute('data-id'); render(); break;
+    case 'selectHotel': state.selectedHotelId=t.getAttribute('data-id'); render(); break;
+    case 'confirmChoice': handleConfirmChoice(); break;
+    case 'approve': handleApprove(t.getAttribute('data-role')); break;
+    case 'return': handleReturn(t.getAttribute('data-role')); break;
+    case 'reject': handleReject(t.getAttribute('data-role')); break;
+    case 'comment': handleComment(t.getAttribute('data-role')); break;
+    case 'copy': copyText(t.getAttribute('data-copy')); break;
+  }
+});
+
+function updateField(e){
+  var el = e.target;
+  var field = el.getAttribute('data-field');
+  if(!field) return;
+  var role = el.getAttribute('data-role');
+  var value = el.type==='checkbox' ? el.checked : el.value;
+  if(role){
+    if(field==='comment'){ state.commentDraft[role]=value; if(state.commentError[role]){ state.commentError[role]=''; } }
+    else if(state.accountant.hasOwnProperty(field)){ state.accountant[field]=value; if(field==='budgetRemaining'){ updateBudgetPill(); } }
+  } else {
+    state.form[field] = value;
+  }
+}
+function updateBudgetPill(){
+  var pill=document.getElementById('budgetPill');
+  if(!pill) return;
+  var match = totalCost() <= (Number(state.accountant.budgetRemaining)||0);
+  pill.className = 'pill ' + (match?'pill-ok':'pill-bad');
+  pill.textContent = match?'В рамках бюджета':'Превышение бюджета';
+}
+app.addEventListener('input', updateField);
+app.addEventListener('change', updateField);
+
+/* ======================= BOOT ======================= */
+function start(initialData){
+  state = Object.assign(defaultState(), initialData||{});
+  render();
+}
+try{
+  if(window.claude && window.claude.hot && window.claude.hot.snapshot){
+    window.claude.hot.snapshot(function(){ return state; });
+  }
+}catch(e){}
+if(window.claude && window.claude.hot && window.claude.hot.ready){
+  window.claude.hot.ready(start);
+} else {
+  start((window.claude && window.claude.hot && window.claude.hot.data) || {});
+}
+
+})();
+</script>
