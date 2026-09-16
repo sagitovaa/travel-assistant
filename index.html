@@ -55,13 +55,30 @@ button{font-family:inherit;}
 .topbar-actions{display:flex; gap:8px; align-items:center;}
 .icon-btn{width:34px; height:34px; border-radius:9px; border:1px solid var(--border); background:var(--surface); color:var(--text-muted); display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:.95rem;}
 .icon-btn:hover{border-color:var(--border-strong); color:var(--text);}
-.icon-btn:focus-visible, .btn:focus-visible, .role-tab:focus-visible, .option-card:focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
+.icon-btn:focus-visible, .btn:focus-visible, .option-card:focus-visible, .login-demo-row:focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
 
-.role-tabs{display:flex; gap:6px; overflow-x:auto; padding-bottom:2px; margin-top:12px; scrollbar-width:none;}
-.role-tabs::-webkit-scrollbar{display:none;}
-.role-tab{position:relative; flex:none; padding:8px 14px; border-radius:999px; border:1px solid var(--border); background:var(--surface); color:var(--text-muted); font-size:.82rem; font-weight:600; cursor:pointer; white-space:nowrap;}
-.role-tab.active{background:var(--accent); border-color:var(--accent); color:var(--accent-contrast);}
-.role-tab .dot{position:absolute; top:-3px; right:-3px; width:9px; height:9px; border-radius:50%; background:var(--gold); border:2px solid var(--bg);}
+.session-bar{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:14px; padding:9px 9px 9px 12px; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-m);}
+.session-role{display:flex; align-items:center; gap:10px; font-size:.85rem; font-weight:600; color:var(--text);}
+.session-role .avatar{width:30px; height:30px; border-radius:50%; background:var(--accent-soft); color:var(--accent-strong); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:.74rem; flex:none; letter-spacing:0;}
+.session-dot{width:7px; height:7px; border-radius:50%; background:var(--gold); display:inline-block; margin-left:2px;}
+.logout-btn{font-size:.78rem; font-weight:600; padding:7px 13px; border-radius:999px; border:1px solid var(--border); background:var(--surface); color:var(--text-muted); cursor:pointer;}
+.logout-btn:hover{border-color:var(--danger); color:var(--danger);}
+
+/* ---- Login screen ---- */
+.login-wrap{min-height:100vh; display:flex; align-items:center; justify-content:center; padding-block:48px; background:radial-gradient(circle at 20% 15%, var(--accent-soft), transparent 55%), radial-gradient(circle at 85% 85%, var(--gold-soft), transparent 45%), var(--bg);}
+.login-card{width:100%; max-width:408px; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-l); padding:34px 28px; box-shadow:var(--shadow);}
+.login-mark{width:52px; height:52px; font-size:1.2rem; margin:0 auto 18px;}
+.login-title{text-align:center; font-size:1.32rem; font-weight:800; letter-spacing:-0.01em;}
+.login-sub{text-align:center; font-size:.83rem; color:var(--text-muted); margin:6px 0 24px; line-height:1.55;}
+.login-error{background:var(--danger-soft); color:var(--danger); border-radius:var(--radius-s); padding:10px 12px; font-size:.8rem; margin-bottom:16px; line-height:1.45;}
+.login-submit{width:100%; margin-top:6px; padding:11px;}
+.login-demo-list{display:flex; flex-direction:column; gap:8px; margin-top:14px;}
+.login-demo-row{display:flex; justify-content:space-between; align-items:center; gap:10px; width:100%; padding:10px 12px; border-radius:var(--radius-s); border:1px solid var(--border); background:var(--surface-2); cursor:pointer; text-align:left; font-size:.78rem; color:var(--text); font-family:inherit;}
+.login-demo-row:hover{border-color:var(--accent); background:var(--accent-soft);}
+.login-demo-role{font-weight:700;}
+.login-demo-creds{display:flex; gap:10px; color:var(--text-faint); font-size:.72rem; flex:none;}
+.login-footnote{margin-top:18px; font-size:.7rem; color:var(--text-faint); text-align:center; line-height:1.55;}
+.login-reset{display:block; margin:14px auto 0; background:none; border:none; color:var(--text-faint); font-size:.72rem; text-decoration:underline; cursor:pointer;}
 
 .status-row{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:14px; flex-wrap:wrap;}
 .status-badge{display:inline-flex; align-items:center; gap:7px; padding:6px 12px; border-radius:999px; font-size:.78rem; font-weight:600; background:var(--accent-soft); color:var(--accent-strong);}
@@ -215,6 +232,14 @@ button{font-family:inherit;}
 var ROLE_LABELS = {employee:'Сотрудник', travel_manager:'Тревел-менеджер', economist:'Экономист', accountant:'Бухгалтер', manager:'Согласующий руководитель'};
 var ROLE_ORDER = ['employee','travel_manager','manager','economist','accountant'];
 
+var LOGIN_ACCOUNTS = {
+  sotrudnik:   {password:'demo2026', role:'employee'},
+  travel:      {password:'demo2026', role:'travel_manager'},
+  rukovoditel: {password:'demo2026', role:'manager'},
+  economist:   {password:'demo2026', role:'economist'},
+  buhgalter:   {password:'demo2026', role:'accountant'}
+};
+
 var STATUS_LABELS = {
   DRAFT:'Черновик',
   NEEDS_PURPOSE_CLARIFICATION:'Требуется уточнение цели',
@@ -296,6 +321,10 @@ function defaultForm(){
 
 function defaultState(){
   return {
+    loggedInRole:null,
+    loginUsername:'',
+    loginPassword:'',
+    loginError:'',
     currentRole:'employee',
     status:'DRAFT',
     form: defaultForm(),
@@ -786,12 +815,15 @@ function needsAttention(role){
   return false;
 }
 
+function roleInitials(label){
+  var parts = label.split(/[\s-]+/).filter(Boolean);
+  var s = parts.slice(0,2).map(function(w){return w.charAt(0).toUpperCase();}).join('');
+  return s || label.charAt(0).toUpperCase();
+}
+
 function renderHeader(){
-  var tabsHtml = ROLE_ORDER.map(function(r){
-    var active = state.currentRole===r ? ' active' : '';
-    var dot = needsAttention(r) ? '<span class="dot"></span>' : '';
-    return '<button class="role-tab'+active+'" data-action="setRole" data-role="'+r+'">'+esc(ROLE_LABELS[r])+dot+'</button>';
-  }).join('');
+  var role = state.loggedInRole;
+  var pending = needsAttention(role);
 
   var steps = stepperState();
   var stepsHtml = STEPS.map(function(s,i){
@@ -810,7 +842,10 @@ function renderHeader(){
         '<button class="icon-btn" data-action="resetDemo" title="Сбросить демо">⟲</button>'+
       '</div>'+
     '</div>'+
-    '<div class="role-tabs">'+tabsHtml+'</div>'+
+    '<div class="session-bar">'+
+      '<div class="session-role"><span class="avatar">'+esc(roleInitials(ROLE_LABELS[role]))+'</span>'+esc(ROLE_LABELS[role])+(pending?'<span class="session-dot" title="Требуется действие"></span>':'')+'</div>'+
+      '<button class="logout-btn" data-action="logout">Выйти</button>'+
+    '</div>'+
     '<div class="status-row">'+
       '<span class="status-badge '+statusBadgeClass()+'"><span class="dot2"></span>'+esc(STATUS_LABELS[state.status])+'</span>'+
       '<button class="final-card-btn" data-action="openFinalCard">Итоговая карточка</button>'+
@@ -1312,6 +1347,57 @@ function renderFinalCardModal(){
 }
 
 /* ======================= MAIN RENDER ======================= */
+/* ======================= LOGIN ======================= */
+function renderLoginScreen(){
+  var rows = Object.keys(LOGIN_ACCOUNTS).map(function(u){
+    var acc = LOGIN_ACCOUNTS[u];
+    return '<button type="button" class="login-demo-row" data-action="quickLogin" data-username="'+esc(u)+'">'+
+      '<span class="login-demo-role">'+esc(ROLE_LABELS[acc.role])+'</span>'+
+      '<span class="login-demo-creds"><span class="mono">'+esc(u)+'</span><span class="mono">'+esc(acc.password)+'</span></span>'+
+    '</button>';
+  }).join('');
+  return '<div class="login-wrap"><div class="login-card">'+
+    '<div class="brand-mark login-mark">TM</div>'+
+    '<h1 class="login-title">Тревел-ассистент</h1>'+
+    '<p class="login-sub">Войдите под своей учётной записью, чтобы продолжить оформление командировки</p>'+
+    (state.loginError ? '<div class="login-error">'+esc(state.loginError)+'</div>' : '')+
+    '<div class="field"><label class="field-label">Логин</label><input class="input" type="text" data-field="loginUsername" value="'+esc(state.loginUsername)+'" placeholder="например, sotrudnik" autocomplete="username"></div>'+
+    '<div class="field"><label class="field-label">Пароль</label><input class="input" type="password" data-field="loginPassword" value="'+esc(state.loginPassword)+'" placeholder="••••••••" autocomplete="current-password"></div>'+
+    '<button class="btn btn-primary login-submit" data-action="login">Войти</button>'+
+    '<div class="divider-text">тестовые учётные записи</div>'+
+    '<div class="login-demo-list">'+rows+'</div>'+
+    '<p class="login-footnote">Демо-вход для прототипа: реальная проверка учётных данных и разграничение доступа не выполняются, все пароли тестовые.</p>'+
+    '<button type="button" class="login-reset" data-action="resetDemo">Сбросить демо-данные заявки</button>'+
+  '</div></div>';
+}
+function handleLogin(){
+  var u = (state.loginUsername||'').trim().toLowerCase();
+  var p = state.loginPassword||'';
+  var acc = LOGIN_ACCOUNTS[u];
+  if(!acc || acc.password!==p){
+    state.loginError = 'Неверный логин или пароль. Используйте одну из тестовых учётных записей ниже.';
+    render();
+    return;
+  }
+  state.loggedInRole = acc.role;
+  state.currentRole = acc.role;
+  state.loginUsername=''; state.loginPassword=''; state.loginError='';
+  render();
+}
+function handleQuickLogin(username){
+  var acc = LOGIN_ACCOUNTS[username];
+  if(!acc) return;
+  state.loggedInRole = acc.role;
+  state.currentRole = acc.role;
+  state.loginUsername=''; state.loginPassword=''; state.loginError='';
+  render();
+}
+function handleLogout(){
+  state.loggedInRole = null;
+  state.loginError='';
+  render();
+}
+
 function renderRoleContent(){
   switch(state.currentRole){
     case 'employee': return renderEmployee();
@@ -1324,6 +1410,11 @@ function renderRoleContent(){
 }
 
 function render(){
+  if(!state.loggedInRole){
+    document.getElementById('app').innerHTML = renderLoginScreen();
+    updateThemeIcon();
+    return;
+  }
   var html = renderHeader() + renderRoleContent();
   html += '<div class="footnote">Прототип использует только тестовые данные (тестовые ФИО, маршруты, валюта ₸). Реальные сервисы бронирования, оплаты и персональные данные не подключаются.</div>';
   html += renderFinalCardModal();
@@ -1342,7 +1433,9 @@ app.addEventListener('click', function(e){
   if(!t) return;
   var action = t.getAttribute('data-action');
   switch(action){
-    case 'setRole': state.currentRole = t.getAttribute('data-role'); render(); break;
+    case 'login': handleLogin(); break;
+    case 'quickLogin': handleQuickLogin(t.getAttribute('data-username')); break;
+    case 'logout': handleLogout(); break;
     case 'toggleTheme': toggleTheme(); break;
     case 'resetDemo': resetDemo(); break;
     case 'openFinalCard': state.showFinalCard=true; render(); break;
@@ -1404,6 +1497,9 @@ function updateField(e){
       state.form.purpose = value;
     }
     render();
+  } else if(field==='loginUsername' || field==='loginPassword'){
+    state[field] = value;
+    if(state.loginError) state.loginError='';
   } else {
     state.form[field] = value;
   }
@@ -1417,6 +1513,15 @@ function updateBudgetPill(){
 }
 app.addEventListener('input', updateField);
 app.addEventListener('change', updateField);
+app.addEventListener('keydown', function(e){
+  if(e.key==='Enter'){
+    var field = e.target.getAttribute && e.target.getAttribute('data-field');
+    if(field==='loginUsername' || field==='loginPassword'){
+      e.preventDefault();
+      handleLogin();
+    }
+  }
+});
 
 /* ======================= BOOT ======================= */
 function start(initialData){
