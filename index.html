@@ -269,6 +269,18 @@ var REQUIRED_FIELDS = [
 
 var VAGUE_PHRASES = ['по рабочим вопросам','командировка','по делам','рабочая поездка','служебная необходимость','деловая поездка','по работе','общие вопросы','рабочие вопросы','прочее','иное','по необходимости','по служебной необходимости','рабочий вопрос','деловая поездка по работе'];
 
+var PURPOSE_OTHER = '__other__';
+var PURPOSE_OPTIONS = [
+  'Переговоры с поставщиком или партнёром по условиям контракта',
+  'Подписание договора или соглашения',
+  'Участие в конференции, выставке или форуме',
+  'Обучение, тренинг или повышение квалификации',
+  'Встреча с клиентом для презентации продукта или услуги',
+  'Аудит, инспекция или проверка объекта либо филиала',
+  'Открытие нового объекта или запуск проекта',
+  'Участие в совещании или рабочей группе головного офиса'
+];
+
 /* ======================= STATE ======================= */
 function defaultForm(){
   return {
@@ -287,6 +299,7 @@ function defaultState(){
     currentRole:'employee',
     status:'DRAFT',
     form: defaultForm(),
+    purposeOther:false,
     dateErrors:[],
     missingFields:[],
     flightOptions:[],
@@ -350,6 +363,13 @@ function selectedHotel(){ return findHotel(state.selectedHotelId); }
 function ticketCost(){ var f=selectedFlight(); return f? f.price : 0; }
 function accommodationCost(){ var h=selectedHotel(); return h? h.totalPrice : 0; }
 function totalCost(){ return ticketCost()+accommodationCost(); }
+
+function purposeSelectValue(){
+  var p = state.form.purpose;
+  if(p && PURPOSE_OPTIONS.indexOf(p) >= 0) return p;
+  if(p || state.purposeOther) return PURPOSE_OTHER;
+  return '';
+}
 
 /* ======================= VALIDATION ======================= */
 function isVague(purpose){
@@ -948,6 +968,24 @@ function yesNoGroup(key,value){
     '<button type="button" class="yesno-btn'+(value==='no'?' active':'')+'" data-action="setYesNo" data-field="'+key+'" data-value="no">Нет</button>'+
   '</div>';
 }
+function renderPurposeField(){
+  var f=state.form;
+  var selVal = purposeSelectValue();
+  var invalidSelect = state.status.indexOf('NEEDS_')===0 && !f.purpose.trim() ? ' invalid' : '';
+  var opts = '<option value=""'+(selVal===''?' selected':'')+' disabled>Выберите цель или укажите свою…</option>'+
+    PURPOSE_OPTIONS.map(function(o){
+      return '<option value="'+esc(o)+'"'+(selVal===o?' selected':'')+'>'+esc(o)+'</option>';
+    }).join('')+
+    '<option value="'+PURPOSE_OTHER+'"'+(selVal===PURPOSE_OTHER?' selected':'')+'>Другое — указать свой вариант</option>';
+  var html = '<div class="field'+invalidSelect+'"><label class="field-label">Цель поездки<span class="req">*</span></label>'+
+    '<select class="select" data-field="purposeChoice">'+opts+'</select>'+
+    '<span class="field-hint">Выберите наиболее подходящий вариант из списка — либо «Другое», чтобы описать цель своими словами</span>'+
+  '</div>';
+  if(selVal===PURPOSE_OTHER){
+    html += field('purpose','textarea','Своя формулировка цели', f.purpose, true, 'опишите конкретную задачу поездки');
+  }
+  return html;
+}
 
 function renderEmployeeForm(showDemoTools, submitLabel, submitAction){
   var f=state.form;
@@ -972,7 +1010,7 @@ function renderEmployeeForm(showDemoTools, submitLabel, submitAction){
   }
 
   html += '<div class="card-head"><h2>Цель командировки</h2></div>';
-  html += field('purpose','textarea','Цель поездки', f.purpose, true, 'например: переговоры с поставщиком по условиям контракта на 2027 год');
+  html += renderPurposeField();
   html += field('organization','text','Организация или мероприятие', f.organization, true);
   html += field('justification','textarea','Обоснование необходимости поездки', f.justification, true);
   html += field('expectedResult','textarea','Ожидаемый результат командировки', f.expectedResult, true);
@@ -1300,9 +1338,9 @@ app.addEventListener('click', function(e){
     case 'resetDemo': resetDemo(); break;
     case 'openFinalCard': state.showFinalCard=true; render(); break;
     case 'closeFinalCard': state.showFinalCard=false; render(); break;
-    case 'fillExample': fillExampleForm(); state.dateErrors=[]; render(); break;
-    case 'fillVague': fillVagueExample(); state.dateErrors=[]; render(); break;
-    case 'clearForm': state.form=defaultForm(); state.dateErrors=[]; render(); break;
+    case 'fillExample': fillExampleForm(); state.purposeOther=true; state.dateErrors=[]; render(); break;
+    case 'fillVague': fillVagueExample(); state.purposeOther=true; state.dateErrors=[]; render(); break;
+    case 'clearForm': state.form=defaultForm(); state.purposeOther=false; state.dateErrors=[]; render(); break;
     case 'submitAnketa': handleSubmitAnketa(); break;
     case 'resubmitAfterReturn': handleResubmitAfterReturn(); break;
     case 'setYesNo':
@@ -1348,6 +1386,15 @@ function updateField(e){
   if(role){
     if(field==='comment'){ state.commentDraft[role]=value; if(state.commentError[role]){ state.commentError[role]=''; } }
     else if(state.accountant.hasOwnProperty(field)){ state.accountant[field]=value; if(field==='budgetRemaining'){ updateBudgetPill(); } }
+  } else if(field==='purposeChoice'){
+    if(value===PURPOSE_OTHER){
+      state.purposeOther = true;
+      if(PURPOSE_OPTIONS.indexOf(state.form.purpose)>=0) state.form.purpose='';
+    } else {
+      state.purposeOther = false;
+      state.form.purpose = value;
+    }
+    render();
   } else {
     state.form[field] = value;
   }
