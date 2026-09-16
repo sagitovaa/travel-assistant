@@ -213,7 +213,7 @@ button{font-family:inherit;}
 
 /* ======================= DATA / CONSTANTS ======================= */
 var ROLE_LABELS = {employee:'Сотрудник', travel_manager:'Тревел-менеджер', economist:'Экономист', accountant:'Бухгалтер', manager:'Согласующий руководитель'};
-var ROLE_ORDER = ['employee','travel_manager','economist','accountant','manager'];
+var ROLE_ORDER = ['employee','travel_manager','manager','economist','accountant'];
 
 var STATUS_LABELS = {
   DRAFT:'Черновик',
@@ -237,9 +237,9 @@ var STEPS = [
   {key:'FORM', label:'Заполнение'},
   {key:'OPTIONS', label:'Подбор вариантов'},
   {key:'CHOICE', label:'Выбор сотрудника'},
+  {key:'MGR', label:'Руководитель'},
   {key:'ECON', label:'Экономист'},
   {key:'ACC', label:'Бухгалтер'},
-  {key:'MGR', label:'Руководитель'},
   {key:'DONE', label:'Готово'}
 ];
 
@@ -634,7 +634,7 @@ function handleResendOptions(){
 
 function handleConfirmChoice(){
   if(!state.selectedFlightId || !state.selectedHotelId) return;
-  state.status = 'ECONOMIST_REVIEW';
+  state.status = 'MANAGER_REVIEW';
   render();
 }
 
@@ -643,9 +643,9 @@ function handleApprove(role){
   var comment = (state.commentDraft[role]||'').trim();
   addHistory(role, 'Согласовано', comment);
   state.commentDraft[role]='';
-  if(stage==='ECONOMIST') state.status='ACCOUNTANT_REVIEW';
-  else if(stage==='ACCOUNTANT') state.status='MANAGER_REVIEW';
-  else if(stage==='MANAGER') state.status='READY';
+  if(stage==='MANAGER') state.status='ECONOMIST_REVIEW';
+  else if(stage==='ECONOMIST') state.status='ACCOUNTANT_REVIEW';
+  else if(stage==='ACCOUNTANT') state.status='READY';
   render();
 }
 function handleReturn(role){
@@ -687,7 +687,7 @@ function handleResubmitAfterReturn(){
   var missing = getMissingFields(f);
   if(missing.length){ state.missingFields=missing; state.status='NEEDS_DATA_CLARIFICATION'; render(); return; }
   var stage = state.returnedStage;
-  state.status = STAGE_TO_STATUS[stage] || 'ECONOMIST_REVIEW';
+  state.status = STAGE_TO_STATUS[stage] || 'MANAGER_REVIEW';
   state.returnedStage = null;
   render();
 }
@@ -739,21 +739,21 @@ function updateThemeIcon(){
 
 /* ======================= STEPPER LOGIC ======================= */
 function stepperState(){
-  var order=['FORM','OPTIONS','CHOICE','ECON','ACC','MGR','DONE'];
+  var order=['FORM','OPTIONS','CHOICE','MGR','ECON','ACC','DONE'];
   var idxMap={
     DRAFT:0, NEEDS_PURPOSE_CLARIFICATION:0, NEEDS_DATA_CLARIFICATION:0,
     OPTIONS_SOURCING:1, AWAITING_EMPLOYEE_CHOICE:2,
-    ECONOMIST_REVIEW:3, ACCOUNTANT_REVIEW:4, MANAGER_REVIEW:5, READY:6
+    MANAGER_REVIEW:3, ECONOMIST_REVIEW:4, ACCOUNTANT_REVIEW:5, READY:6
   };
   var currentIdx;
   var mode='normal';
   if(state.status==='RETURNED'){
-    var stageIdx={ECONOMIST:3, ACCOUNTANT:4, MANAGER:5}[state.returnedStage];
+    var stageIdx={MANAGER:3, ECONOMIST:4, ACCOUNTANT:5}[state.returnedStage];
     currentIdx = stageIdx!==undefined ? stageIdx : 0;
     mode='warn';
   } else if(state.status==='REJECTED'){
     var lastStage = state.history.length ? ROLE_TO_STAGE[state.history[state.history.length-1].role] : null;
-    currentIdx = lastStage ? {ECONOMIST:3,ACCOUNTANT:4,MANAGER:5}[lastStage] : 0;
+    currentIdx = lastStage ? {MANAGER:3,ECONOMIST:4,ACCOUNTANT:5}[lastStage] : 0;
     mode='danger';
   } else {
     currentIdx = idxMap[state.status]!==undefined ? idxMap[state.status] : 0;
@@ -1202,16 +1202,38 @@ function approvalActionsHtml(role){
     '</div></div>';
 }
 
-function renderEconomist(){
+function renderManager(){
   var st=state.status;
   if(['DRAFT','NEEDS_PURPOSE_CLARIFICATION','NEEDS_DATA_CLARIFICATION','OPTIONS_SOURCING','AWAITING_EMPLOYEE_CHOICE'].indexOf(st)>=0){
+    return '<div class="card"><p class="empty-note">Заявка ещё не дошла до этапа согласования руководителем.</p></div>';
+  }
+  var html = '<div class="card"><div class="card-head"><h2>Согласование руководителем</h2><span class="card-sub">'+esc(state.form.fullName)+'</span></div>';
+  html += '<div class="eyebrow">Цель и ожидаемый результат</div>'+purposeBlockRO();
+  html += '<div class="section-gap">'+renderTripReadonlySummary()+'</div>';
+  html += costSummaryHtml();
+  if(st==='MANAGER_REVIEW'){
+    html += approvalActionsHtml('manager');
+  } else {
+    html += '<div class="section-gap"><div class="eyebrow">История согласования</div>'+historyTable()+'</div>';
+  }
+  html += '</div>';
+  return html;
+}
+
+function renderEconomist(){
+  var st=state.status;
+  if(['DRAFT','NEEDS_PURPOSE_CLARIFICATION','NEEDS_DATA_CLARIFICATION','OPTIONS_SOURCING','AWAITING_EMPLOYEE_CHOICE','MANAGER_REVIEW'].indexOf(st)>=0){
     return '<div class="card"><p class="empty-note">Заявка ещё не дошла до этапа согласования экономистом.</p></div>';
   }
   var f=state.form;
+  var mgrDecision = state.history.filter(function(h){return h.role==='manager';}).slice(-1)[0];
   var html = '<div class="card"><div class="card-head"><h2>Проверка бюджета</h2><span class="card-sub">'+esc(f.fullName)+'</span></div>';
   html += '<div class="eyebrow">Цель и обоснование</div>'+purposeBlockRO();
   html += '<div class="section-gap">'+renderTripReadonlySummary()+'</div>';
   html += costSummaryHtml();
+  html += '<div class="section-gap"><div class="eyebrow">Решение руководителя</div>'+
+    (mgrDecision ? '<div class="readonly-grid">'+roField('Решение', mgrDecision.decision)+roField('Комментарий', mgrDecision.comment||'—')+'</div>' : '<p class="empty-note">Нет решения.</p>')+
+  '</div>';
   if(st==='ECONOMIST_REVIEW'){
     html += approvalActionsHtml('economist');
   } else {
@@ -1223,14 +1245,18 @@ function renderEconomist(){
 
 function renderAccountant(){
   var st=state.status;
-  if(['DRAFT','NEEDS_PURPOSE_CLARIFICATION','NEEDS_DATA_CLARIFICATION','OPTIONS_SOURCING','AWAITING_EMPLOYEE_CHOICE','ECONOMIST_REVIEW'].indexOf(st)>=0){
+  if(['DRAFT','NEEDS_PURPOSE_CLARIFICATION','NEEDS_DATA_CLARIFICATION','OPTIONS_SOURCING','AWAITING_EMPLOYEE_CHOICE','MANAGER_REVIEW','ECONOMIST_REVIEW'].indexOf(st)>=0){
     return '<div class="card"><p class="empty-note">Заявка ещё не дошла до этапа проверки бухгалтером.</p></div>';
   }
+  var mgrDecision = state.history.filter(function(h){return h.role==='manager';}).slice(-1)[0];
   var econDecision = state.history.filter(function(h){return h.role==='economist';}).slice(-1)[0];
   var html = '<div class="card"><div class="card-head"><h2>Проверка финансовых данных</h2><span class="card-sub">'+esc(state.form.fullName)+'</span></div>';
   html += '<div class="eyebrow">Параметры поездки</div>'+basicInfoRO();
   html += '<div class="section-gap">'+renderTripReadonlySummary()+'</div>';
   html += costSummaryHtml();
+  html += '<div class="section-gap"><div class="eyebrow">Решение руководителя</div>'+
+    (mgrDecision ? '<div class="readonly-grid">'+roField('Решение', mgrDecision.decision)+roField('Комментарий', mgrDecision.comment||'—')+'</div>' : '<p class="empty-note">Нет решения.</p>')+
+  '</div>';
   html += '<div class="section-gap"><div class="eyebrow">Решение экономиста</div>'+
     (econDecision ? '<div class="readonly-grid">'+roField('Решение', econDecision.decision)+roField('Комментарий', econDecision.comment||'—')+'</div>' : '<p class="empty-note">Нет решения.</p>')+
   '</div>';
@@ -1258,24 +1284,7 @@ function renderAccountant(){
   if(isCurrent){
     html += approvalActionsHtml('accountant');
   } else {
-    html += '<div class="section-gap"><div class="eyebrow">История согласования</div>'+historyTable()+'</div>';
-  }
-  html += '</div>';
-  return html;
-}
-
-function renderManager(){
-  var st=state.status;
-  if(['DRAFT','NEEDS_PURPOSE_CLARIFICATION','NEEDS_DATA_CLARIFICATION','OPTIONS_SOURCING','AWAITING_EMPLOYEE_CHOICE','ECONOMIST_REVIEW','ACCOUNTANT_REVIEW'].indexOf(st)>=0 && st!=='RETURNED' && st!=='REJECTED' && st!=='READY'){
-    return '<div class="card"><p class="empty-note">Заявка ещё не дошла до этапа согласования руководителем.</p></div>';
-  }
-  var html = '<div class="card"><div class="card-head"><h2>Окончательное согласование</h2><span class="card-sub">'+esc(state.form.fullName)+'</span></div>';
-  html += '<div class="eyebrow">Цель и ожидаемый результат</div>'+purposeBlockRO();
-  html += '<div class="section-gap">'+renderTripReadonlySummary()+'</div>';
-  html += costSummaryHtml();
-  html += '<div class="section-gap"><div class="eyebrow">Полная история согласования</div>'+historyTable()+'</div>';
-  if(st==='MANAGER_REVIEW'){
-    html += approvalActionsHtml('manager');
+    html += '<div class="section-gap"><div class="eyebrow">Полная история согласования</div>'+historyTable()+'</div>';
   }
   html += '</div>';
   return html;
